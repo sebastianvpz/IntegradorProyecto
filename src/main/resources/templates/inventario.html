@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
+<head>
+    <title>Inventario</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div id="vue-inventario">
+        <h3 class="mb-4">Gestión de Inventario</h3>
+
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <select class="form-select" v-model="filtroCategoria">
+                    <option value="">Todas las categorías</option>
+                    <option value="perecible">Perecible</option>
+                    <option value="bebida">Bebida</option>
+                    <option value="otro">Otro</option>
+                </select>
+
+                <button class="btn btn-success" @click="descargarExcel">
+                    <i class="fas fa-file-excel"></i> Descargar
+                </button>
+            </div>
+
+            <button class="btn btn-primary mt-2 mt-md-0" @click="abrirFormularioNuevo">
+                <i class="fas fa-plus"></i> Agregar producto
+            </button>
+        </div>
+
+        <!-- Tabla -->
+        <table class="table table-hover table-bordered">
+            <thead class="table-dark">
+            <tr>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Cantidad</th>
+                <th>Stock mínimo</th>
+                <th>Vencimiento</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="producto in productosFiltrados" :key="producto.id">
+                <td>{{ producto.nombre }}</td>
+                <td>{{ producto.categoria }}</td>
+                <td :class="{'text-danger fw-bold': producto.cantidad < producto.cantidadMinima}">
+                    {{ producto.cantidad }}
+                </td>
+                <td>{{ producto.cantidadMinima }}</td>
+                <td>{{ producto.fechaVencimiento || '-' }}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-2" @click="editarProducto(producto)">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" @click="eliminarProducto(producto.id)">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Botón productos requeridos -->
+        <div class="d-flex justify-content-end mt-4">
+            <button class="btn btn-outline-info">
+                <i class="fas fa-list"></i> Ver productos requeridos por el chef
+            </button>
+        </div>
+
+        <!-- ✅ MODAL dentro del div Vue -->
+        <div class="modal fade" id="modalProducto" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form @submit.prevent="guardarProducto">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{{ productoSeleccionado.id ? 'Editar' : 'Agregar' }} Producto</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-2">
+                                <label>Nombre</label>
+                                <input type="text" class="form-control" v-model="productoSeleccionado.nombre" required>
+                            </div>
+                            <div class="mb-2">
+                                <label>Categoría</label>
+                                <select class="form-control" v-model="productoSeleccionado.categoria" required>
+                                    <option value="perecible">Perecible</option>
+                                    <option value="bebida">Bebida</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label>Cantidad</label>
+                                <input type="number" class="form-control" v-model="productoSeleccionado.cantidad" required>
+                            </div>
+                            <div class="mb-2">
+                                <label>Stock mínimo</label>
+                                <input type="number" class="form-control" v-model="productoSeleccionado.cantidadMinima" required>
+                            </div>
+                            <div class="mb-2">
+                                <label>Fecha de vencimiento</label>
+                                <input type="date" class="form-control" v-model="productoSeleccionado.fechaVencimiento">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+                            <button class="btn btn-success" type="submit">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- 🟩 FIN DEL MODAL -->
+    </div>
+</div>
+
+<script layout:fragment="script">
+    new Vue({
+        el: '#vue-inventario',
+        data: {
+            productos: [],
+            productoSeleccionado: {},
+            filtroCategoria: ''
+
+        },
+        computed: {
+            productosFiltrados() {
+                if (!Array.isArray(this.productos)) return [];
+
+                const filtrados = this.productos.filter(p =>
+                    !this.filtroCategoria || p.categoria === this.filtroCategoria
+                );
+
+                console.log("Productos filtrados:", filtrados);
+                return filtrados;
+            }
+        },
+        mounted() {
+            this.cargarProductos();
+        },
+        methods: {
+            cargarProductos() {
+                this.$http.get('/api/productos').then(resp => {
+                    console.log("Respuesta completa de /api/productos:", resp);
+                    console.log("Cuerpo recibido:", resp.data);
+                    this.productos = Array.isArray(resp.data) ? resp.data : [];
+                    console.log("Productos cargados en Vue:", this.productos);
+                });
+            },
+            abrirFormularioNuevo() {
+                this.productoSeleccionado = {
+                    nombre: '',
+                    categoria: '',
+                    cantidad: 0,
+                    cantidadMinima: 0,
+                    fechaVencimiento: '',
+                    estado: 'activo'
+                };
+
+                this.$nextTick(() => {
+                    const modalElement = document.getElementById('modalProducto');
+                    if (modalElement) {
+                        const modal = new bootstrap.Modal(modalElement);
+                        modal.show();
+                    } else {
+                        console.error("Modal no encontrado");
+                    }
+                });
+            },
+            editarProducto(producto) {
+                this.productoSeleccionado = Object.assign({}, producto);
+                this.$nextTick(() => {
+                    const modal = new bootstrap.Modal(document.getElementById('modalProducto'));
+                    modal.show();
+                });
+            },
+            guardarProducto() {
+                const p = this.productoSeleccionado;
+                const peticion = p.id
+                    ? this.$http.put(`/api/productos/${p.id}`, p)
+                    : this.$http.post('/api/productos', p);
+
+                peticion.then(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('modalProducto')).hide();
+                    this.cargarProductos();
+                });
+            },
+            descargarExcel() {
+                window.open('/api/productos/excel', '_blank');
+            },
+            eliminarProducto(id) {
+                if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+                    this.$http.put(`/api/productos/inactivar/${id}`, { estado: "inactivo" }).then(() => {
+                        this.cargarProductos();
+                    });
+                }
+            }
+        }
+    });
+</script>
+
+
+</body>
+</html>
