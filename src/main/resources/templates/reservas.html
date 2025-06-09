@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{_layout}">
+
+<head>
+    <title>Reservas</title>
+</head>
+
+<body>
+<!-- Fragmento de contenido -->
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <h2 class="mb-4">Gestión de Reservas</h2>
+
+        <!-- Filtro y botón nuevo -->
+        <div class="d-flex justify-content-between mb-3">
+            <form class="d-flex" th:action="@{/reservas/buscar}" method="get">
+                <input class="form-control me-2" type="search" placeholder="Buscar por nombre o fecha"
+                       aria-label="Buscar" name="filtro">
+                <button class="btn btn-outline-primary" type="submit">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </form>
+            <a th:href="@{/reservas/nueva}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nueva Reserva
+            </a>
+        </div>
+
+        <!-- Tabla de reservas -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Número de Personas</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="reserva, iterStat : ${reservas}">
+                    <td th:text="${iterStat.count}">1</td>
+                    <td th:text="${reserva.nombre}">Nombre</td>
+                    <td th:text="${reserva.telefono}">123456789</td>
+                    <td th:text="${reserva.fecha}">2025-06-09</td>
+                    <td th:text="${reserva.hora}">20:00</td>
+                    <td th:text="${reserva.numeroPersonas}">4</td>
+                    <td>
+                        <span th:text="${reserva.estado}" class="badge"
+                              th:classappend="${reserva.estado == 'activo'} ? 'bg-success' : 'bg-secondary'"></span>
+                    </td>
+                    <td>
+                        <a th:href="@{/reservas/editar/{id}(id=${reserva.id})}" class="btn btn-sm btn-warning"
+                           title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a th:href="@{/reservas/inactivar/{id}(id=${reserva.id})}" class="btn btn-sm btn-danger"
+                           title="Inactivar"
+                           th:onclick="'return confirm(\'¿Inactivar esta reserva?\');'">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(reservas)}">
+                    <td colspan="8" class="text-center text-muted">No hay reservas registradas.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Fragmento de script -->
+<div layout:fragment="script">
+    <script>
+        // Script específico para la vista de reservas
+        console.log("Vista de reservas cargada correctamente.");
+    </script>
+</div>
+
+</body>
+</html>
