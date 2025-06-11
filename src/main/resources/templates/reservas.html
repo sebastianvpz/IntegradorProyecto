@@ -22,7 +22,7 @@
                     <i class="fas fa-search"></i> Buscar
                 </button>
             </form>
-            <a th:href="@{/reservas/nueva}" class="btn btn-success">
+            <a th:href="@{/reservas/nuevo}" class="btn btn-success">
                 <i class="fas fa-plus"></i> Nueva Reserva
             </a>
         </div>
@@ -45,20 +45,23 @@
                 <tbody>
                 <tr th:each="reserva, iterStat : ${reservas}">
                     <td th:text="${iterStat.count}">1</td>
-                    <td th:text="${reserva.nombre}">Nombre</td>
-                    <td th:text="${reserva.telefono}">123456789</td>
-                    <td th:text="${reserva.fecha}">2025-06-09</td>
-                    <td th:text="${reserva.hora}">20:00</td>
+                    <!-- Concatenamos nombresComensal + espacio + apellidosComensal -->
+                    <td th:text="${reserva.nombresComensal + ' ' + reserva.apellidosComensal}">Nombre Completo</td>
+                    <td th:text="${reserva.telefonoComensal}">123456789</td>
+                    <td th:text="${reserva.fechaReserva}">2025-06-09</td>
+                    <td th:text="${reserva.horaReserva}">20:00</td>
                     <td th:text="${reserva.numeroPersonas}">4</td>
                     <td>
                         <span th:text="${reserva.estado}" class="badge"
-                              th:classappend="${reserva.estado == 'activo'} ? 'bg-success' : 'bg-secondary'"></span>
+                              th:classappend="${reserva.estado == 'reservado'} ? 'bg-success' : 'bg-secondary'"></span>
                     </td>
                     <td>
+                        <!-- EDITAR: abre el mismo formulario en modo edición -->
                         <a th:href="@{/reservas/editar/{id}(id=${reserva.id})}" class="btn btn-sm btn-warning"
                            title="Editar">
                             <i class="fas fa-edit"></i>
                         </a>
+                        <!-- INACTIVAR: cambia estado a "cancelado" -->
                         <a th:href="@{/reservas/inactivar/{id}(id=${reserva.id})}" class="btn btn-sm btn-danger"
                            title="Inactivar"
                            th:onclick="'return confirm(\'¿Inactivar esta reserva?\');'">

@@ -1,39 +1,27 @@
 package com.utp.integradorspringboot.models;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "reservas")
-@Getter
-@Setter
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Reserva {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nombres_comensal", nullable = false)
-    private String nombresComensal;
-
-    @Column(name = "apellidos_comensal", nullable = false)
-    private String apellidosComensal;
-
-    @Column(name = "correo_comensal", nullable = false)
-    private String correoComensal;
-
     @Column(name = "telefono_comensal", nullable = false)
     private Long telefonoComensal;
 
-    @Column
-    private String ocasion;
-
     @Column(name = "fecha_reserva", nullable = false)
-    private String fechaReserva;
+    private String fechaReserva;  // formato "yyyy-MM-dd"
 
     @Column(name = "hora_reserva", nullable = false)
-    private String horaReserva;
+    private String horaReserva;   // formato "HH:mm"
 
     @Column(name = "numero_personas", nullable = false)
     private Integer numeroPersonas;
@@ -41,12 +29,24 @@ public class Reserva {
     @Column(name = "id_mesa", nullable = false)
     private Integer idMesa;
 
-    @Column(name = "fecha_creacion")
-    private String fechaCreacion;
-
     @Column(name = "id_restaurante", nullable = false)
     private Integer idRestaurante;
 
-    @Column
+    @Column(name = "nombres_comensal", length = 255, nullable = false)
+    private String nombresComensal;
+
+    @Column(name = "apellidos_comensal", length = 255, nullable = false)
+    private String apellidosComensal;
+
+    @Column(name = "correo_comensal", length = 255, nullable = false)
+    private String correoComensal;
+
+    @Column(name = "estado", length = 100)
     private String estado = "reservado";
+
+    @Column(name = "ocasion", length = 255)
+    private String ocasion;
+
+    @Column(name = "fecha_creacion")
+    private String fechaCreacion;
 }

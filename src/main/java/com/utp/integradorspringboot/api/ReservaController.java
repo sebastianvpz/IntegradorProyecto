@@ -3,10 +3,11 @@ package com.utp.integradorspringboot.controllers;
 import com.utp.integradorspringboot.models.Reserva;
 import com.utp.integradorspringboot.services.ReservaService;
 import jakarta.servlet.http.HttpServletResponse;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -23,26 +24,78 @@ public class ReservaController {
     @Autowired
     private ReservaService reservaService;
 
-    // Mostrar página de reservas (vista HTML)
+    /**
+     * 1) Mostrar todas las reservas (lista) en la vista "reservas.html"
+     *    URL: GET /reservas
+     */
     @GetMapping
     public String mostrarReservas(Model model) {
-        List<Reserva> reservas = reservaService.listarTodos();
-        model.addAttribute("reservas", reservas);
+        List<Reserva> todas = reservaService.listarTodos();
+        model.addAttribute("reservas", todas);
         return "reservas";
     }
 
-    // Crear reserva desde formulario web
+    /**
+     * 1.b) Búsqueda (para que /reservas/buscar no devuelva 404)
+     *     URL: GET /reservas/buscar?filtro=...
+     *
+     *     POR AHORA SOLO SE MUESTRAN TODAS (sin filtrar). 
+     *     Si quieres implementar un filtro real, podrías añadir un método en el repositorio.
+     */
+    @GetMapping("/buscar")
+    public String buscarReservas(@RequestParam(required = false) String filtro, Model model) {
+        // Por el momento, ignoro el parámetro "filtro" y devuelvo todas
+        List<Reserva> todas = reservaService.listarTodos();
+        model.addAttribute("reservas", todas);
+        return "reservas";
+    }
+
+    /**
+     * 2) Mostrar el formulario de "NUEVA RESERVA"
+     *    URL: GET /reservas/nuevo
+     */
+    @GetMapping("/nuevo")
+    public String formularioNuevaReserva(Model model) {
+        Reserva reserva = new Reserva();
+        model.addAttribute("reserva", reserva);
+        return "nueva_reserva";
+    }
+
+    /**
+     * 2.b) Mostrar el formulario para EDITAR una reserva existente
+     *     URL: GET /reservas/editar/{id}
+     */
+    @GetMapping("/editar/{id}")
+    public String formularioEditarReserva(@PathVariable Long id, Model model) {
+        Optional<Reserva> opt = reservaService.buscarPorId(id);
+        if (opt.isPresent()) {
+            model.addAttribute("reserva", opt.get());
+            return "nueva_reserva";
+        } else {
+            // Si no existe, redirigimos a la lista
+            return "redirect:/reservas";
+        }
+    }
+
+    /**
+     * 3) Procesar el formulario y GUARDAR NUEVA reserva
+     *    URL: POST /reservas/guardar
+     */
     @PostMapping("/guardar")
-    public String guardarReserva(@ModelAttribute Reserva reserva) {
+    public String guardarReserva(@ModelAttribute("reserva") Reserva reserva) {
+        // Asignamos fechaCreacion automáticamente
         reserva.setFechaCreacion(LocalDate.now().toString());
-        reserva.setIdRestaurante(1); // temporal
+        // El campo "estado" ya viene por defecto como "reservado" en el modelo
         reservaService.guardar(reserva);
         return "redirect:/reservas";
     }
 
-    // Actualizar reserva desde formulario web
+    /**
+     * 4) Procesar el formulario y ACTUALIZAR reserva existente
+     *    URL: POST /reservas/actualizar
+     */
     @PostMapping("/actualizar")
-    public String actualizarReserva(@ModelAttribute Reserva reserva) {
+    public String actualizarReserva(@ModelAttribute("reserva") Reserva reserva) {
         Optional<Reserva> existente = reservaService.buscarPorId(reserva.getId());
         if (existente.isPresent()) {
             Reserva actual = existente.get();
@@ -55,24 +108,28 @@ public class ReservaController {
             actual.setHoraReserva(reserva.getHoraReserva());
             actual.setNumeroPersonas(reserva.getNumeroPersonas());
             actual.setIdMesa(reserva.getIdMesa());
+            // Si quieres permitir cambiar el estado manualmente, déjalo; 
+            // de lo contrario, podrías impedir modificar "estado" aquí.
             actual.setEstado(reserva.getEstado());
             reservaService.guardar(actual);
         }
         return "redirect:/reservas";
     }
 
-    // Inactivar reserva desde botón web
+    /**
+     * 5) Inactivar (borrado lógico) una reserva por su ID
+     *    URL: GET /reservas/inactivar/{id}
+     */
     @GetMapping("/inactivar/{id}")
     public String inactivarReserva(@PathVariable Long id) {
-        Optional<Reserva> existente = reservaService.buscarPorId(id);
-        existente.ifPresent(reserva -> {
-            reserva.setEstado("cancelado");
-            reservaService.guardar(reserva);
-        });
+        reservaService.inactivar(id);
         return "redirect:/reservas";
     }
 
-    // Exportar reservas a Excel (desde botón en vista)
+    /**
+     * 6) Exportar todas las reservas a Excel
+     *    URL: GET /reservas/exportar/excel
+     */
     @GetMapping("/exportar/excel")
     public void exportarExcel(HttpServletResponse response) throws IOException {
         List<Reserva> reservas = reservaService.listarTodos();

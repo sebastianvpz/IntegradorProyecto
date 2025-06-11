@@ -29,4 +29,14 @@ public class ReservaService {
     public void eliminar(Long id) {
         reservaRepository.deleteById(id);
     }
+
+    /**
+     * Cambia el estado de la reserva a "cancelado" (borrado lógico).
+     */
+    public void inactivar(Long id) {
+        Reserva r = reservaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Reserva no encontrada: " + id));
+        r.setEstado("cancelado");
+        reservaRepository.save(r);
+    }
 }
