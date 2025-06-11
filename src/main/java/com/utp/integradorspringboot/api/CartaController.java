@@ -4,8 +4,8 @@
  */
 package com.utp.integradorspringboot.api;
 
-import com.utp.integradorspringboot.models.Profesor;
-import com.utp.integradorspringboot.repositories.ProfesorRepository;
+import com.utp.integradorspringboot.models.Carta;
+import com.utp.integradorspringboot.repositories.CartaRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -21,15 +21,15 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "http://localhost:8081")
 @RestController
 @RequestMapping("/api")
-public class ProfesorController {
+public class CartaController {
 
     @Autowired
-    ProfesorRepository repository;
+    CartaRepository repository;
 
-    @GetMapping("/profesor")
-    public ResponseEntity<List<Profesor>> getAll(@RequestParam(required = false) String title) {
+    @GetMapping("/platos")
+    public ResponseEntity<List<Carta>> getAll(@RequestParam(required = false) String title) {
         try {
-            List<Profesor> lista = new ArrayList<Profesor>();
+            List<Carta> lista = new ArrayList<Carta>();
             repository.findAll().forEach(lista::add);
             if (lista.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -40,9 +40,9 @@ public class ProfesorController {
         }
     }
 
-    @GetMapping("/profesor/{id}")
-    public ResponseEntity<Profesor> getById(@PathVariable("id") Long id) {
-        Optional<Profesor> entidad = repository.findById(id);
+    @GetMapping("/platos/{id}")
+    public ResponseEntity<Carta> getById(@PathVariable("id") Long id) {
+        Optional<Carta> entidad = repository.findById(id);
         if (entidad.isPresent()) {
             return new ResponseEntity<>(entidad.get(), HttpStatus.OK);
         } else {
@@ -50,29 +50,30 @@ public class ProfesorController {
         }
     }
 
-    @PostMapping("/profesor")
-    public ResponseEntity<Profesor> create(@RequestBody Profesor entidad) {
+    @PostMapping("/platos")
+    public ResponseEntity<Carta> create(@RequestBody Carta entidad) {
         try {
-            Profesor _entidad = repository.save(new Profesor(null, entidad.getNombres(), entidad.getApellidos()));
+            Carta _entidad = repository.save(new Carta(null,1L, entidad.getNombre(), entidad.getDescripcion(), entidad.getPrecio(),"activo"));
             return new ResponseEntity<>(_entidad, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @PutMapping("/profesor/{id}")
-    public ResponseEntity<Profesor> update(@PathVariable("id") Long id, @RequestBody Profesor entidad) {
-        Profesor _entidad = repository.findById(id).orElse(null);
+    @PutMapping("/platos/{id}")
+    public ResponseEntity<Carta> update(@PathVariable("id") Long id, @RequestBody Carta entidad) {
+        Carta _entidad = repository.findById(id).orElse(null);
         if (_entidad != null) {
-            _entidad.setNombres(entidad.getNombres());
-            _entidad.setApellidos(entidad.getApellidos());
+            _entidad.setNombre(entidad.getNombre());
+            _entidad.setDescripcion(entidad.getDescripcion());
+            _entidad.setPrecio(entidad.getPrecio());
             return new ResponseEntity<>(repository.save(_entidad), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
-    @DeleteMapping("/profesor/{id}")
+    @DeleteMapping("/platos/{id}")
     public ResponseEntity<HttpStatus> delete(@PathVariable("id") Long id) {
         try {
             repository.deleteById(id);

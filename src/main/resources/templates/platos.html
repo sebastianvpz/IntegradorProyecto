@@ -1,55 +1,62 @@
 <html layout:decorate="_layout">
     <head>
-        <title>UTP Integrador - Profesores</title>
+        <title>Proyecto Integrador 1</title>
     </head>
     <body>
         <div layout:fragment="content">
-            <h1>Profesores</h1>
+            <h1>Gestión de carta</h1>
             <p class="text-end">
-                <button class="btn btn-primary" @click="nuevo">Nuevo</button>
-            </p>
-            <p>
+                <button><img src="../filtro.png" style="width: 20px"> Filtro</button>
             </p>
             <table class="table">
                 <thead>
                     <tr>
                         <th>Id</th>
                         <th>Nombre</th>
-                        <th>Apellidos</th>
-                        <th></th>
+                        <th>Descripción</th>
+                        <th>Precio</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="item in entidades">
                         <td>{{item.id}}</td>
-                        <td>{{item.nombres}}</td>
-                        <td>{{item.apellidos}}</td>
-                        <td class="text-end">
+                        <td>{{item.nombre}}</td>
+                        <td>{{item.descripcion}}</td>
+                        <td>{{item.precio}}</td>
+                        <td class="text-center">
                             <button class="btn btn-primary" @click="editar(item.id)">Editar</button>
                             <button class="btn btn-danger" @click="eliminar(item.id)">Eliminar</button>
                         </td>
                     </tr>
                 </tbody>
             </table>
+            
             <div class="modal" tabindex="-1" id="mdlEntidad">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" v-if="entidad.id==0">Nuevo</h5>
+                            <h5 class="modal-title" v-if="entidad.id==0">Agregar</h5>
                             <h5 class="modal-title" v-if="entidad.id!=0">Editar</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div class="form-group row">
-                                <label for="nombres" class="col-sm-2 col-form-label">Nombres</label>
-                                <div class="col-sm-10">
-                                    <input class="form-control" id="nombres" v-model="entidad.nombres" />
+                                <label for="nombre" class="col-sm-7 col-form-label">Nombre</label>
+                                <div class="col-sm-7">
+                                    <input class="form-control" id="nombre" v-model="entidad.nombre" />
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <label for="apellidos" class="col-sm-2 col-form-label">Apellidos</label>
-                                <div class="col-sm-10">
-                                    <input class="form-control" id="apellidos" v-model="entidad.apellidos" />
+                                <label for="descripcion" class="col-sm-7 col-form-label">Descripción</label>
+                                <div class="col-sm-7">
+                                    <input class="form-control" id="descripcion" v-model="entidad.descripcion" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="precio" class="col-sm-7 col-form-label">Precio en soles</label>
+                                <div class="col-sm-7">
+                                    <input class="form-control" id="precio" v-model="entidad.precio" />
                                 </div>
                             </div>
                         </div>
@@ -71,6 +78,9 @@
                         <div class="modal-body">
                             ¿Estás seguro que quieres eliminar?
                         </div>
+                        <div class="text-center">
+                        <img src="../eliminar.png" style="width: 80px">
+                        </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-danger" @click="confimareliminacion">Eliminar</button>
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -78,6 +88,9 @@
                     </div>
                 </div>
             </div>
+            <p class="text-center">
+                <button style="background-color: #4fff33; color: white;" @click="nuevo">Agregar</button>
+            </p>
         </div>
         <script layout:fragment="script">
             new Vue({
@@ -88,32 +101,33 @@
                 },
                 methods: {
                     listar: function () {
-                        this.$http.get('/api/profesor').then(response => {
+                        this.$http.get('/api/platos').then(response => {
                             this.entidades = response.data;
                         });
                     },
                     nuevo: function () {
                         this.entidad = {
                             id: 0,
-                            nombres: "",
-                            apellidos: ""
+                            nombre: "",
+                            descripcion: "",
+                            precio: ""
                         };
                         $("#mdlEntidad").modal("show");
                     },
                     editar: function (id) {
-                        this.$http.get('/api/profesor/' + id).then(response => {
+                        this.$http.get('/api/platos/' + id).then(response => {
                             this.entidad = response.data;
                             $("#mdlEntidad").modal("show");
                         });
                     },
                     guardar: function () {
-                        this.$http.post('/api/profesor', this.entidad).then(response => {
+                        this.$http.post('/api/platos', this.entidad).then(response => {
                             this.listar();
                             $("#mdlEntidad").modal("hide");
                         });
                     },
                     actualizar: function () {
-                        this.$http.put('/api/profesor/' + this.entidad.id, this.entidad).then(response => {
+                        this.$http.put('/api/platos/' + this.entidad.id, this.entidad).then(response => {
                             this.listar();
                             $("#mdlEntidad").modal("hide");
                         });
@@ -123,7 +137,7 @@
                         $("#mdlEliminar").modal("show");
                     },
                     confimareliminacion: function () {
-                        this.$http.delete('/api/profesor/' + this.entidad.id).then(response => {
+                        this.$http.delete('/api/platos/' + this.entidad.id).then(response => {
                             this.listar();
                             $("#mdlEliminar").modal("hide");
                         });
@@ -136,10 +150,3 @@
         </script>
     </body>
 </html>
-
-
-
-
-
-
-
