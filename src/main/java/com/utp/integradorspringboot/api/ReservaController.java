@@ -1,4 +1,4 @@
-package com.utp.integradorspringboot.controllers;
+package com.utp.integradorspringboot.api;
 
 import com.utp.integradorspringboot.models.Reserva;
 import com.utp.integradorspringboot.services.ReservaService;
