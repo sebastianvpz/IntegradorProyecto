@@ -1,5 +1,7 @@
 package com.utp.integradorspringboot.api;
 
+import com.utp.integradorspringboot.dto.UsuarioDto;
+import com.utp.integradorspringboot.models.Rol;
 import com.utp.integradorspringboot.models.Usuario;
 import com.utp.integradorspringboot.services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Controlador REST que expone endpoints para la gestión de usuarios.
@@ -26,8 +29,27 @@ public class UsuarioController {
      * @return Lista de usuarios con estado 'activo'
      */
     @GetMapping
-    public List<Usuario> listar() {
-        return usuarioService.listarActivos();
+    public ResponseEntity<List<UsuarioDto>> listar() {
+        List<UsuarioDto> usuarios = usuarioService.listarActivos()
+                .stream()
+                .map(u -> {
+                    UsuarioDto dto = new UsuarioDto();
+                    dto.setId(u.getId());
+                    dto.setNombre(u.getNombre());
+                    dto.setCorreo(u.getCorreo());
+                    dto.setFechaCreacion(u.getFechaCreacion());
+                    dto.setRol(
+                            u.getRoles()
+                                    .stream()
+                                    .findFirst()
+                                    .map(Rol::getNombre)
+                                    .orElse("SIN ROL")
+                    );
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(usuarios);
     }
 
     /**

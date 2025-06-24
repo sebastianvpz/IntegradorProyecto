@@ -21,6 +21,7 @@
         <th>Nombre</th>
         <th>Correo</th>
         <th>Fecha de creación</th>
+        <th>Rol</th>
         <th>Acciones</th>
       </tr>
       </thead>
@@ -29,6 +30,7 @@
         <td>{{ usuario.nombre }}</td>
         <td>{{ usuario.correo }}</td>
         <td>{{ usuario.fechaCreacion ? usuario.fechaCreacion.split('T')[0] : '-' }}</td>
+        <td>{{ usuario.rol }}</td>
         <td>
           <button class="btn btn-sm btn-warning me-2" @click="editarUsuario(usuario)">
             <i class="fas fa-edit"></i>
@@ -76,7 +78,9 @@
   </div>
 </div>
 
+
 <script layout:fragment="script">
+
   new Vue({
       el: '#vue-usuarios',
       data: {
@@ -89,8 +93,11 @@
       methods: {
           cargarUsuarios() {
               this.$http.get('/api/usuarios').then(resp => {
-                  this.usuarios = Array.isArray(resp.data) ? resp.data : [];
-              });
+              console.log("Respuesta usuarios:", resp.data); // ← DEBUG
+              this.usuarios = Array.isArray(resp.data)
+                  ? resp.data
+                  : resp.data.usuarios || [];
+            });
           },
           abrirFormularioNuevo() {
               this.usuarioSeleccionado = {
