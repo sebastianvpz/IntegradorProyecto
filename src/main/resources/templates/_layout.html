@@ -112,7 +112,10 @@
                     <li><a class="dropdown-item" href="#">Perfil</a></li>
                     <li><a class="dropdown-item" href="#">Configuración</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="/logout">Cerrar sesión</a></li>
+                    <li>
+                        <a class="dropdown-item text-danger" href="#" onclick="cerrarSesion(); return false;">Cerrar sesión</a>
+                    </li>
+
                 </ul>
             </div>
         </div>
@@ -137,7 +140,6 @@
         if (request.headers && typeof request.headers.set === 'function') {
           request.headers.set('Authorization', 'Bearer ' + token);
         } else {
-          // Vue-resource >= 1.5.0 usa un objeto simple para headers
           request.headers = request.headers || {};
           request.headers['Authorization'] = 'Bearer ' + token;
         }
@@ -146,10 +148,10 @@
         console.warn("⚠ No se encontró token en localStorage");
       }
 
-      //  CORRECCIÓN: `next()` debe llamarse sin argumentos
-      return next(); // ← NO le pases un objeto como antes, simplemente llama next()
+      return next();
     });
 </script>
+
 
 
 
@@ -163,6 +165,18 @@
         sidebar.classList.toggle('expanded');
     }
 </script>
+
+<script>
+    function cerrarSesion() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('correo');
+      localStorage.removeItem('roles');
+      localStorage.removeItem('restauranteId');
+      window.location.href = "/login";
+    }
+</script>
+
+
 
 
 </body>

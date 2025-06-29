@@ -3,9 +3,13 @@ package com.utp.integradorspringboot.api;
 import com.utp.integradorspringboot.dto.UsuarioDto;
 import com.utp.integradorspringboot.models.Rol;
 import com.utp.integradorspringboot.models.Usuario;
+import com.utp.integradorspringboot.repositories.RolRepository;
+import com.utp.integradorspringboot.security.JwtUtil;
 import com.utp.integradorspringboot.services.UsuarioService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,15 +26,24 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private RolRepository rolRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
-     * Lista todos los usuarios activos.
-     *
-     * @return Lista de usuarios con estado 'activo'
+     * Lista todos los usuarios activos segun el Id del restaurante.
+     * @param  request token del usuario logeado
+     * @return Lista de usuarios con estado 'activo' e Id del restaurante correpondiente.
      */
     @GetMapping
-    public ResponseEntity<List<UsuarioDto>> listar() {
-        List<UsuarioDto> usuarios = usuarioService.listarActivos()
+    public ResponseEntity<List<UsuarioDto>> listar(HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+
+        List<UsuarioDto> usuarios = usuarioService.listarPorRestaurante(restauranteId)
                 .stream()
                 .map(u -> {
                     UsuarioDto dto = new UsuarioDto();
@@ -68,31 +81,65 @@ public class UsuarioController {
     /**
      * Crea un nuevo usuario.
      *
-     * @param usuario Datos del usuario a registrar
+     * @param dto Datos del usuario a registrar
+     * @param request token del usuario logeado
      * @return Usuario creado
      */
     @PostMapping
-    public Usuario crear(@RequestBody Usuario usuario) {
-        return usuarioService.guardar(usuario);
+    public ResponseEntity<UsuarioDto> crear(@RequestBody UsuarioDto dto, HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+
+        Usuario nuevoUsuario = usuarioService.guardarDesdeDto(dto, restauranteId);
+
+        UsuarioDto respuesta = new UsuarioDto();
+        respuesta.setId(nuevoUsuario.getId());
+        respuesta.setNombre(nuevoUsuario.getNombre());
+        respuesta.setCorreo(nuevoUsuario.getCorreo());
+        respuesta.setFechaCreacion(nuevoUsuario.getFechaCreacion());
+        respuesta.setRol(dto.getRol());
+
+        return ResponseEntity.ok(respuesta);
     }
 
     /**
      * Actualiza un usuario existente.
      *
      * @param id ID del usuario a actualizar
-     * @param usuario Nuevos datos del usuario
+     * @param dto Nuevos datos del usuario
      * @return Usuario actualizado o 404 si no se encuentra
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> actualizar(@PathVariable Long id, @RequestBody Usuario usuario) {
+    public ResponseEntity<UsuarioDto> actualizar(@PathVariable Long id, @RequestBody UsuarioDto dto) {
         return usuarioService.buscarPorId(id)
-                .map(actual -> {
-                    actual.setNombre(usuario.getNombre());
-                    actual.setCorreo(usuario.getCorreo());
-                    actual.setContrasenia(usuario.getContrasenia());
-                    actual.setRestauranteId(usuario.getRestauranteId());
-                    return ResponseEntity.ok(usuarioService.guardar(actual));
-                }).orElse(ResponseEntity.notFound().build());
+                .map(usuarioExistente -> {
+                    usuarioExistente.setNombre(dto.getNombre());
+                    usuarioExistente.setCorreo(dto.getCorreo());
+
+                    // Si la contraseña viene vacía o ya está encriptada, no la modificamos
+                    if (dto.getContrasenia() != null && !dto.getContrasenia().isBlank()
+                            && !dto.getContrasenia().startsWith("$2a$")) {
+                        usuarioExistente.setContrasenia(passwordEncoder.encode(dto.getContrasenia()));
+                    }
+
+                    // Actualizar el rol
+                    Rol nuevoRol = rolRepository.findByNombre(dto.getRol().toUpperCase())
+                            .orElseThrow(() -> new IllegalArgumentException("Rol no válido: " + dto.getRol()));
+                    usuarioExistente.getRoles().clear();
+                    usuarioExistente.getRoles().add(nuevoRol);
+
+                    Usuario actualizado = usuarioService.guardar(usuarioExistente, usuarioExistente.getRestauranteId());
+
+                    UsuarioDto respuesta = new UsuarioDto();
+                    respuesta.setId(actualizado.getId());
+                    respuesta.setNombre(actualizado.getNombre());
+                    respuesta.setCorreo(actualizado.getCorreo());
+                    respuesta.setFechaCreacion(actualizado.getFechaCreacion());
+                    respuesta.setRol(nuevoRol.getNombre());
+
+                    return ResponseEntity.ok(respuesta);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     /**

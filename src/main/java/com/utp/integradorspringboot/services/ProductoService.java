@@ -17,14 +17,6 @@ public class ProductoService {
     @Autowired
     private ProductoRepository productoRepository;
 
-    /**
-     * Lista todos los productos que se encuentran en estado "activo".
-     *
-     * @return Lista de productos activos.
-     */
-    public List<Producto> listarTodos() {
-        return productoRepository.findByEstado("activo");
-    }
 
     /**
      * Guarda o actualiza un producto en la base de datos.
@@ -45,6 +37,17 @@ public class ProductoService {
     public Optional<Producto> buscarPorId(Long id) {
         return productoRepository.findById(id);
     }
+
+    /**
+     * Busca los productos por restaurante.
+     *
+     * @param restauranteId Identificador del restaurante.
+     * @return Producto encontrado, en un Optional.
+     */
+    public List<Producto> listarPorRestaurante(Long restauranteId) {
+        return productoRepository.findByEstadoAndIdRestaurante("activo", restauranteId);
+    }
+
 
 
 

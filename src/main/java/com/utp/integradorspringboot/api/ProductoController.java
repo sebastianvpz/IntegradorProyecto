@@ -1,7 +1,9 @@
 package com.utp.integradorspringboot.api;
 
 import com.utp.integradorspringboot.models.Producto;
+import com.utp.integradorspringboot.security.JwtUtil;
 import com.utp.integradorspringboot.services.ProductoService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -26,15 +28,20 @@ public class ProductoController {
 
     @Autowired
     private ProductoService productoService;
+    @Autowired
+    private JwtUtil jwtUtil;
+
 
     /**
-     * Obtiene todos los productos activos.
+     * Obtiene todos los productos activos y pertenecientes a su restaurante.
      *
      * @return Lista de productos.
      */
     @GetMapping
-    public List<Producto> listar() {
-        return productoService.listarTodos();
+    public List<Producto> listar(HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+        return productoService.listarPorRestaurante(restauranteId);
     }
 
     /**
@@ -44,36 +51,48 @@ public class ProductoController {
      * @return Producto creado.
      */
     @PostMapping
-    public Producto crear(@RequestBody Producto producto) {
-        producto.setIdRestaurante(1L);  // temporal, hasta implementar autenticación
+    public Producto crear(@RequestBody Producto producto, HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+        producto.setIdRestaurante(restauranteId);
         producto.setFechaIngreso(LocalDate.now().toString());
         return productoService.guardar(producto);
     }
+
 
     /**
      * Actualiza un producto existente.
      *
      * @param id        ID del producto a actualizar.
      * @param producto  Datos nuevos del producto.
+     * @param request token del usuario logeado
      * @return Producto actualizado o error si no existe.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Producto> actualizar(@PathVariable Long id, @RequestBody Producto producto) {
+    public ResponseEntity<Producto> actualizar(@PathVariable Long id, @RequestBody Producto producto, HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+
         Optional<Producto> existente = productoService.buscarPorId(id);
         if (existente.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        Producto actualizado = existente.get();
-        actualizado.setNombre(producto.getNombre());
-        actualizado.setCategoria(producto.getCategoria());
-        actualizado.setCantidad(producto.getCantidad());
-        actualizado.setCantidadMinima(producto.getCantidadMinima());
-        actualizado.setFechaVencimiento(producto.getFechaVencimiento());
-        actualizado.setEstado(producto.getEstado());
+        Producto actual = existente.get();
+        if (!actual.getIdRestaurante().equals(restauranteId)) {
+            return ResponseEntity.status(403).build();
+        }
 
-        return ResponseEntity.ok(productoService.guardar(actualizado));
+        actual.setNombre(producto.getNombre());
+        actual.setCategoria(producto.getCategoria());
+        actual.setCantidad(producto.getCantidad());
+        actual.setCantidadMinima(producto.getCantidadMinima());
+        actual.setFechaVencimiento(producto.getFechaVencimiento());
+        actual.setEstado(producto.getEstado());
+
+        return ResponseEntity.ok(productoService.guardar(actual));
     }
+
 
     /**
      * Desactiva un producto cambiando su estado a "inactivo".
@@ -101,8 +120,11 @@ public class ProductoController {
      * @throws IOException si ocurre un error al generar el archivo.
      */
     @GetMapping("/excel")
-    public void exportarExcel(HttpServletResponse response) throws IOException {
-        List<Producto> productos = productoService.listarTodos();
+    public void exportarExcel(HttpServletRequest request ,HttpServletResponse response) throws IOException {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+        List<Producto> productos = productoService.listarPorRestaurante(restauranteId);
+
 
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Inventario");

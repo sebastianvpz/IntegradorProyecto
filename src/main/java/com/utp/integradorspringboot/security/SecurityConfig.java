@@ -24,9 +24,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**","/login","/usuarios", "/favicon.ico").permitAll()
+                        .requestMatchers("/api/auth/**","/login","/usuarios", "/favicon.ico", "/inventario").permitAll()
                         .requestMatchers("/api/usuarios/**").hasAnyRole("ADMIN")
-                        .requestMatchers("/api/productos/**").hasAnyRole("ADMIN", "ALMACENERO", "CHEF")
+                        .requestMatchers("/api/productos/**").hasAnyRole("ADMIN", "CHEF")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

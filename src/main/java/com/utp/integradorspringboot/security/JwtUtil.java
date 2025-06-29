@@ -6,6 +6,7 @@ import com.utp.integradorspringboot.models.Usuario;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -91,4 +92,27 @@ public class JwtUtil {
             return false;
         }
     }
+    /**
+     * Obtiene el token desde el request.
+     * @param request objeto que representa la petición HTTP entrante.
+     * @return el token.
+     */
+    public String obtenerTokenDesdeRequest(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7); // Elimina "Bearer "
+        }
+        return null;
+    }
+    /**
+     * Obtiene el id del restaurante.
+     * @param token jwt.
+     * @return el id del Restaurante.
+     */
+    public Long extraerRestauranteId(String token) {
+        Claims claims = extraerClaims(token);
+        return claims.get("restauranteId", Integer.class).longValue();
+    }
+
+
 }

@@ -76,6 +76,8 @@
                 window.location.href = "/usuarios";
               } else if (payload.roles.includes("MOZO")) {
                 window.location.href = "/pedidos";
+              } else if (payload.roles.includes("CHEF")) {
+                window.location.href = "/inventariochef";
               } else {
                 window.location.href = "/";
               }

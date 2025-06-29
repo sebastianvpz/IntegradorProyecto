@@ -12,5 +12,7 @@ import java.util.Optional;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     List<Usuario> findByEstado(String estado);
     Optional<Usuario> findByCorreo(String correo);
+    List<Usuario> findByEstadoAndRestauranteId(String estado, Long restauranteId);
+
 
 }

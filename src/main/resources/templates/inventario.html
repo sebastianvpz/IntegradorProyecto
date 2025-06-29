@@ -57,8 +57,13 @@
                     </button>
                 </td>
             </tr>
+            <tr v-if="productosFiltrados.length === 0">
+                <td colspan="6" class="text-center">No se encontraron productos para esta categoría.</td>
+            </tr>
             </tbody>
         </table>
+
+
 
         <!-- Botón productos requeridos -->
         <div class="d-flex justify-content-end mt-4">
@@ -113,6 +118,13 @@
         <!-- 🟩 FIN DEL MODAL -->
     </div>
 </div>
+
+<script>
+    if (!localStorage.getItem('token')) {
+      window.location.href = "/login";
+    }
+</script>
+
 
 <script layout:fragment="script">
     new Vue({
@@ -186,7 +198,24 @@
                 });
             },
             descargarExcel() {
-                window.open('/api/productos/excel', '_blank');
+                const token = localStorage.getItem('token');
+                  this.$http.get('/api/productos/excel', {
+                    responseType: 'blob', // esto es clave
+                    headers: {
+                      'Authorization': 'Bearer ' + token
+                    }
+                  }).then(response => {
+                    const url = window.URL.createObjectURL(new Blob([response.body]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', 'Inventario.xlsx');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }).catch(error => {
+                    console.error(" Error al descargar Excel:", error);
+                    alert("No se pudo descargar el archivo.");
+                  });
             },
             eliminarProducto(id) {
                 if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
