@@ -13,11 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * @author jcerv
  */
 @Controller
-public class ProfesoresController {
+public class CartasController {
     @Autowired
-    @RequestMapping("/profesores")
+    @RequestMapping("/platos")
     public String page() {
-        //model.addAttribute("attribute", "value");
-        return "profesores";
+        return "platos";
     }
 }
