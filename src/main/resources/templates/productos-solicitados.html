@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
+<head>
+  <title>Productos Solicitados</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <div id="vue-solicitados">
+    <h3 class="mb-4">Productos Solicitados por el Chef</h3>
+
+    <table class="table table-hover table-bordered">
+      <thead class="table-dark">
+      <tr>
+        <th>Nombre</th>
+        <th>Categoría</th>
+        <th>Cantidad</th>
+        <th>Fecha de solicitud</th>
+        <th>Solicitado por</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr v-for="p in solicitados" :key="p.id">
+        <td>{{ p.nombreProducto }}</td>
+        <td>{{ p.categoria }}</td>
+        <td>{{ p.cantidad }}</td>
+        <td>{{ p.fechaSolicitud?.split('T')[0] }}</td>
+        <td>{{ p.solicitadoPor }}</td>
+        <td>
+          <span :class="{
+            'badge bg-warning text-dark': p.estado === 'pendiente',
+            'badge bg-success': p.estado === 'aceptado',
+            'badge bg-danger': p.estado === 'denegado'
+          }">
+            {{ p.estado }}
+          </span>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-success me-1" @click="cambiarEstado(p.id, 'aceptado')" :disabled="p.estado !== 'pendiente'">
+            <i class="fas fa-check"></i>
+          </button>
+          <button class="btn btn-sm btn-danger" @click="cambiarEstado(p.id, 'denegado')" :disabled="p.estado !== 'pendiente'">
+            <i class="fas fa-times"></i>
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script layout:fragment="script">
+  new Vue({
+    el: '#vue-solicitados',
+    data: {
+      solicitados: []
+    },
+    mounted() {
+      this.cargarSolicitudes();
+    },
+    methods: {
+      cargarSolicitudes() {
+        const token = localStorage.getItem('token');
+        this.$http.get('/api/solicitados', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        }).then(resp => {
+          this.solicitados = Array.isArray(resp.data) ? resp.data : [];
+          console.log("Productos solicitados:", this.solicitados);
+        }).catch(err => {
+          console.error("Error al cargar productos solicitados:", err);
+        });
+      },
+      cambiarEstado(id, nuevoEstado) {
+        this.$http.put(`/api/solicitados/${id}/estado`, { estado: nuevoEstado }).then(() => {
+          this.cargarSolicitudes();
+        });
+      }
+    }
+  });
+</script>
+</body>
+</html>

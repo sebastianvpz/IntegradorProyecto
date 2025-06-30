@@ -1,5 +1,6 @@
 package com.utp.integradorspringboot.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +16,7 @@ import lombok.Setter;
  *
  * @author Sebastian Velarde
  */
-
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "productos")
 @Getter

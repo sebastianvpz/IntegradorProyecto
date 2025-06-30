@@ -1,5 +1,6 @@
 package com.utp.integradorspringboot.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,6 +15,7 @@ import java.util.Set;
  * Representa la entidad Usuario dentro del sistema.
  * Cada usuario está vinculado a un restaurante específico.
  */
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
