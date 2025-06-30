@@ -13,11 +13,11 @@ public class ReservaService {
 
     @Autowired
     private ReservaRepository reservaRepository;
-
+    
     public List<Reserva> listarTodos() {
         return reservaRepository.findAll();
     }
-
+ 
     public Optional<Reserva> buscarPorId(Long id) {
         return reservaRepository.findById(id);
     }

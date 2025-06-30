@@ -5,7 +5,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "reservas")
-@Getter @Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Reserva {

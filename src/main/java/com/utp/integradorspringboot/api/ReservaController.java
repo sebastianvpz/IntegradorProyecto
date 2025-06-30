@@ -1,4 +1,4 @@
-package com.utp.integradorspringboot.controllers;
+package com.utp.integradorspringboot.api;
 
 import com.utp.integradorspringboot.models.Reserva;
 import com.utp.integradorspringboot.services.ReservaService;
@@ -19,16 +19,22 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping("/reservas")
+@CrossOrigin
 public class ReservaController {
 
-    @Autowired
+    
     private ReservaService reservaService;
 
+     @Autowired
+    public ReservaController(ReservaService usuarioService) {
+        this.reservaService = usuarioService;
+    }   
+    
     /**
      * 1) Mostrar todas las reservas (lista) en la vista "reservas.html"
      *    URL: GET /reservas
      */
-    @GetMapping
+    @PostMapping
     public String mostrarReservas(Model model) {
         List<Reserva> todas = reservaService.listarTodos();
         model.addAttribute("reservas", todas);
@@ -42,7 +48,7 @@ public class ReservaController {
      *     POR AHORA SOLO SE MUESTRAN TODAS (sin filtrar). 
      *     Si quieres implementar un filtro real, podrías añadir un método en el repositorio.
      */
-    @GetMapping("/buscar")
+    @PostMapping("/buscar")
     public String buscarReservas(@RequestParam(required = false) String filtro, Model model) {
         // Por el momento, ignoro el parámetro "filtro" y devuelvo todas
         List<Reserva> todas = reservaService.listarTodos();
@@ -54,7 +60,7 @@ public class ReservaController {
      * 2) Mostrar el formulario de "NUEVA RESERVA"
      *    URL: GET /reservas/nuevo
      */
-    @GetMapping("/nuevo")
+    @PostMapping("/nuevo")
     public String formularioNuevaReserva(Model model) {
         Reserva reserva = new Reserva();
         model.addAttribute("reserva", reserva);
