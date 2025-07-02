@@ -1,0 +1,216 @@
+<html layout:decorate="_layout">
+    <head>
+        <title>Nuevo Pedido</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+        <style>
+            .producto-card {
+                border: 1px solid #ccc;
+                border-radius: 10px;
+                padding: 10px;
+                margin: 10px 0;
+                text-align: center;
+                width: 100%;
+                height: 220px;
+            }
+            .producto-card img {
+                width: 100%;
+                height: 100px;
+                background: #f0f0f0;
+                border-radius: 8px;
+                object-fit: cover;
+            }
+            .pedido-panel {
+                border: 1px solid #ccc;
+                border-radius: 10px;
+                padding: 20px;
+                background: #fefefe;
+                height: 100%;
+            }
+            .pedido-panel h5 {
+                font-weight: bold;
+            }
+            .scroll-productos {
+                max-height: 600px;
+                overflow-y: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <div layout:fragment="content" class="container-fluid" id="app">
+            <div class="row">
+                <!-- PANEL IZQUIERDO (PRODUCTOS) -->
+                <div class="col-md-8">
+                    <div class="mb-3 d-flex align-items-center">
+                        <a href="/pedidos" class="btn btn-danger me-3">← Volver</a>
+                        <input type="text" placeholder="Buscar plato" class="form-control w-50 me-2" v-model="busqueda">
+                        <button class="btn btn-light"><i class="bi bi-search"></i></button>
+                    </div>
+
+                    ```
+                    <div class="row scroll-productos">
+                        <div class="col-md-6 mb-3" v-for="p in platosFiltrados" :key="p.id">
+                            <div class="producto-card text-start">
+                                <p><strong>Plato:</strong> {{ p.nombre }}</p>
+                                <p><strong>Precio:</strong> S/ {{ p.precio.toFixed(2) }}</p>
+                                <p><strong>Estado:</strong> {{ p.estado }}</p>
+                                <p><strong>Descripción:</strong> {{ p.descripcion || 'Sin descripción' }}</p>
+                                <button class="btn btn-dark btn-sm w-100 mt-2" @click="agregarPlato(p)">Agregar +</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- PANEL DERECHO (RESUMEN DEL PEDIDO) -->
+                <div class="col-md-4">
+                    <div class="pedido-panel">
+                        <div class="mb-3">
+                            <label for="nombreCliente" class="form-label">Nombre del Cliente:</label>
+                            <input type="text" id="nombreCliente" class="form-control mb-2" v-model="nombreCliente" placeholder="Ingrese nombre del cliente">
+
+                            <label for="numeroMesa" class="form-label">Número de Mesa:</label>
+                            <input type="number" id="numeroMesa" class="form-control" v-model.number="numeroMesa" min="1" placeholder="Ej. 5">
+                        </div>
+
+
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-info">
+                                <tr>
+                                    <th>Plato</th>
+                                    <th>Cant.</th>
+                                    <th>Precio</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="item in pedido" :key="item.id">
+                                    <td>{{ item.nombre }}</td>
+                                    <td>{{ item.cantidad }}</td>
+                                    <td>{{ (item.precio * item.cantidad).toFixed(2) }}/S</td>
+                                    <td>
+                                        <button class="btn btn-danger btn-sm" @click="quitarPlato(item)">🗑</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="mb-2">
+                            <select class="form-select d-inline w-50" v-model="tipoDescuento">
+                                <option>Porcentaje</option>
+                                <option>Fijo</option>
+                            </select>
+                            <input type="number" class="form-control d-inline w-25 ms-2" placeholder="Descuento" v-model.number="valorDescuento">
+                            <button class="btn btn-secondary ms-2" @click="aplicarDescuento">Aplicar</button>
+                        </div>
+
+                        <div class="mb-2">
+                            <label>Personas:</label>
+                            <input type="number" min="1" class="form-control d-inline w-25 ms-2" v-model.number="personas">
+                        </div>
+
+                        <div class="mb-2">
+                            <p>Sub Total: S/ {{ subtotal.toFixed(2) }}</p>
+                            <p>Descuento: S/ {{ descuento.toFixed(2) }}</p>
+                            <p><strong>Total: S/ {{ total.toFixed(2) }}</strong></p>
+                        </div>
+
+                        <div class="text-center">
+                            <button class="btn btn-danger" @click="cancelarPedido">Cancelar</button>
+                            <button class="btn btn-success" @click="ordenarPedido">Ordenar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            ```
+
+        </div>
+
+        <script layout:fragment="script">
+            new Vue({
+                el: "#app",
+                data: {
+                    busqueda: "",
+                    platos: [],
+                    pedido: [],
+                    personas: 1,
+                    tipoDescuento: "Porcentaje",
+                    valorDescuento: 0,
+                    descuento: 0,
+                    nombreCliente: "",
+                    numeroMesa: 1
+
+                },
+                computed: {
+                    platosFiltrados() {
+                        const buscar = this.busqueda.toLowerCase();
+                        return this.platos.filter(p => p.nombre.toLowerCase().includes(buscar));
+                    },
+                    subtotal() {
+                        return this.pedido.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+                    },
+                    total() {
+                        return this.subtotal - this.descuento;
+                    }
+                },
+                methods: {
+                    agregarPlato(plato) {
+                        let existe = this.pedido.find(p => p.id === plato.id);
+                        if (existe) {
+                            existe.cantidad++;
+                        } else {
+                            this.pedido.push({...plato, cantidad: 1});
+                        }
+                    },
+                    quitarPlato(plato) {
+                        this.pedido = this.pedido.filter(p => p.id !== plato.id);
+                    },
+                    aplicarDescuento() {
+                        if (this.tipoDescuento === "Porcentaje") {
+                            this.descuento = this.subtotal * (this.valorDescuento / 100);
+                        } else {
+                            this.descuento = this.valorDescuento;
+                        }
+                    },
+                    cargarPlatos() {
+                        this.$http.get("/api/platos").then(response => {
+                            this.platos = response.data.filter(p => p.estado === 'activo');
+                        });
+                    },
+                    ordenarPedido() {
+                        const nuevoPedido = {
+                            idUsuario: 1,
+                            idMesa: 1,
+                            idRestaurante: 1,
+                            subtotal: this.subtotal,
+                            descuento: this.descuento,
+                            costoFinal: this.total,
+                            horaEntrega: new Date().getHours(),
+                            fechaCreacion: new Date().toISOString().split("T")[0],
+                            estadoEntrega: "en preparación",
+                            estadoPago: "no pagado"
+                        };
+
+                        this.$http.post("/api/pedidos", nuevoPedido)
+                                .then(response => {
+                                    window.location.href = "/pedidos"; // redirige al ver éxito
+                                })
+                                .catch(err => {
+                                    alert("Error al registrar pedido");
+                                    console.error(err);
+                                });
+                    },
+                    cancelarPedido() {
+                        if (confirm("¿Seguro que deseas cancelar el pedido actual?")) {
+                            this.pedido = [];
+                            this.descuento = 0;
+                            this.valorDescuento = 0;
+                        }
+                    }
+                },
+                mounted() {
+                    this.cargarPlatos();
+                }
+            });
+        </script>
+
+    </body>
+</html>
