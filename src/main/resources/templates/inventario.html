@@ -27,7 +27,6 @@
             </button>
         </div>
 
-        <!-- Tabla -->
         <table class="table table-hover table-bordered">
             <thead class="table-dark">
             <tr>
@@ -43,18 +42,21 @@
             <tr v-for="producto in productosPaginados" :key="producto.id">
                 <td>{{ producto.nombre }}</td>
                 <td>{{ producto.categoria }}</td>
-                <td :class="{'text-danger fw-bold': producto.cantidad < producto.cantidadMinima}">
-                    {{ producto.cantidad }}
-                </td>
+                <td :class="{'text-danger fw-bold': producto.cantidad < producto.cantidadMinima}">{{ producto.cantidad }}</td>
                 <td>{{ producto.cantidadMinima }}</td>
                 <td>{{ producto.fechaVencimiento || '-' }}</td>
                 <td>
-                    <button class="btn btn-sm btn-warning me-2" @click="editarProducto(producto)">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" @click="eliminarProducto(producto.id)">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" @click.prevent="editarProducto(producto)">Editar</a></li>
+                            <li><a class="dropdown-item text-danger" href="#" @click.prevent="eliminarProducto(producto.id)">Inactivar</a></li>
+                            <li><a class="dropdown-item" href="#" @click.prevent="abrirModalLotes(producto)">Ver lotes</a></li>
+                            <li><a class="dropdown-item text-primary" href="#" @click.prevent="abrirModalConsumir(producto)">Consumir stock</a></li>
+                        </ul>
+                    </div>
                 </td>
             </tr>
             <tr v-if="productosFiltrados.length === 0">
@@ -63,7 +65,6 @@
             </tbody>
         </table>
 
-        <!-- Paginación -->
         <nav class="mt-3">
             <ul class="pagination justify-content-center">
                 <li class="page-item" :class="{ disabled: paginaActual === 1 }">
@@ -78,12 +79,6 @@
             </ul>
         </nav>
 
-        <!-- Botón productos requeridos -->
-        <div class="d-flex justify-content-end mt-4">
-            <button class="btn btn-outline-info" @click="abrirRequerimientos">
-                <i class="fas fa-list"></i> Ver productos requeridos por el chef
-            </button>
-        </div>
 
         <!-- Modal producto -->
         <div class="modal fade" id="modalProducto" tabindex="-1">
@@ -128,13 +123,117 @@
                 </div>
             </div>
         </div>
-        <!-- Fin modal -->
+
+        <!-- Modal lotes -->
+        <div class="modal fade" id="modalLotes" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Lotes de {{ productoSeleccionado.nombre }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <button class="btn btn-success mb-3" @click="mostrarFormularioLote = !mostrarFormularioLote">
+                            <i class="fas fa-plus"></i> {{ mostrarFormularioLote ? 'Cancelar' : 'Agregar lote' }}
+                        </button>
+
+                        <div v-if="mostrarFormularioLote" class="card card-body mb-3">
+                            <form @submit.prevent="guardarLote">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label>Cantidad</label>
+                                        <input type="number" class="form-control" v-model="loteNuevo.cantidad" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label>Fecha ingreso</label>
+                                        <input type="date" class="form-control" v-model="loteNuevo.fechaIngreso" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label>Fecha vencimiento</label>
+                                        <input type="date" class="form-control" v-model="loteNuevo.fechaVencimiento">
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label>Proveedor</label>
+                                        <input type="text" class="form-control" v-model="loteNuevo.proveedor" required>
+                                    </div>
+
+                                </div>
+                                <div class="mt-3 d-flex justify-content-end">
+                                    <button class="btn btn-success" type="submit">Guardar lote</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <table class="table table-bordered">
+                            <thead>
+                            <tr>
+                                <th>Cantidad</th>
+                                <th>Fecha Ingreso</th>
+                                <th>Fecha Vencimiento</th>
+                                <th>Proveedor</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="lote in lotes" :key="lote.id">
+                                <td>{{ lote.cantidad }}</td>
+                                <td>{{ lote.fechaIngreso || '-' }}</td>
+                                <td>{{ lote.fechaVencimiento || '-' }}</td>
+                                <td>{{ lote.proveedor }}</td>
+                                <td>{{ lote.estado }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning me-1" @click="abrirFormularioEditarLote(lote)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" @click="inactivarLote(lote.id)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+
+                            </tr>
+                            <tr v-if="lotes.length === 0">
+                                <td colspan="5" class="text-center">No hay lotes para este producto.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal consumir -->
+        <div class="modal fade" id="modalConsumir" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form @submit.prevent="confirmarConsumo">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Consumir stock de {{ productoSeleccionado.nombre }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-2">
+                                <label>Cantidad a consumir</label>
+                                <input type="number" class="form-control" v-model.number="cantidadConsumir" min="1" :max="productoSeleccionado.cantidad" required>
+                                <small class="text-muted">Stock disponible: {{ productoSeleccionado.cantidad }}</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+                            <button class="btn btn-danger" type="submit">Consumir</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <script>
     if (!localStorage.getItem('token')) {
-        window.location.href = "/login";
+    window.location.href = "/login";
     }
 </script>
 
@@ -142,105 +241,152 @@
     new Vue({
         el: '#vue-inventario',
         data: {
-            productos: [],
-            productoSeleccionado: {},
-            filtroCategoria: '',
-            paginaActual: 1,
-            itemsPorPagina: 10
-        },
-        computed: {
-            productosFiltrados() {
-                let filtrados = this.productos;
-                if (this.filtroCategoria) {
-                    filtrados = filtrados.filter(p => p.categoria === this.filtroCategoria);
-                }
-                return filtrados;
-            },
-            totalPaginas() {
-                return Math.ceil(this.productosFiltrados.length / this.itemsPorPagina);
-            },
-            productosPaginados() {
-                const inicio = (this.paginaActual - 1) * this.itemsPorPagina;
-                return this.productosFiltrados.slice(inicio, inicio + this.itemsPorPagina);
-            }
-        },
-        mounted() {
-            this.cargarProductos();
-        },
-        watch: {
-            filtroCategoria() {
-                this.paginaActual = 1;
-            }
-        },
-        methods: {
-            cargarProductos() {
-                this.$http.get('/api/productos').then(resp => {
-                    this.productos = Array.isArray(resp.data) ? resp.data : [];
-                });
-            },
-            abrirFormularioNuevo() {
-                this.productoSeleccionado = {
-                    nombre: '',
-                    categoria: '',
-                    cantidad: 0,
-                    cantidadMinima: 0,
-                    fechaVencimiento: '',
-                    estado: 'activo'
-                };
-                this.$nextTick(() => {
-                    const modal = new bootstrap.Modal(document.getElementById('modalProducto'));
-                    modal.show();
-                });
-            },
-            editarProducto(producto) {
-                this.productoSeleccionado = Object.assign({}, producto);
-                this.$nextTick(() => {
-                    const modal = new bootstrap.Modal(document.getElementById('modalProducto'));
-                    modal.show();
-                });
-            },
-            guardarProducto() {
-                const p = this.productoSeleccionado;
-                const peticion = p.id
-                    ? this.$http.put(`/api/productos/${p.id}`, p)
-                    : this.$http.post('/api/productos', p);
-
-                peticion.then(() => {
-                    bootstrap.Modal.getInstance(document.getElementById('modalProducto')).hide();
-                    this.cargarProductos();
-                });
-            },
-            descargarExcel() {
-                const token = localStorage.getItem('token');
-                this.$http.get('/api/productos/excel', {
-                    responseType: 'blob',
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
-                }).then(response => {
-                    const url = window.URL.createObjectURL(new Blob([response.body]));
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.setAttribute('download', 'Inventario.xlsx');
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }).catch(error => {
-                    console.error("Error al descargar Excel:", error);
-                    alert("No se pudo descargar el archivo.");
-                });
-            },
-            eliminarProducto(id) {
-                if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
-                    this.$http.put(`/api/productos/inactivar/${id}`, { estado: "inactivo" }).then(() => {
-                        this.cargarProductos();
-                    });
-                }
-            },
-            abrirRequerimientos() {
-                window.location.href = "/productos-solicitados";
-            }
+        productos: [],
+        lotes: [],
+        productoSeleccionado: {},
+        loteNuevo: {},
+        mostrarFormularioLote: false,
+        esEdicionLote: false,
+        cantidadConsumir: 0,
+        filtroCategoria: '',
+        paginaActual: 1,
+        itemsPorPagina: 10
+    },
+    computed: {
+    productosFiltrados() {
+        let filtrados = this.productos;
+        if (this.filtroCategoria) {
+        filtrados = filtrados.filter(p => p.categoria === this.filtroCategoria);
         }
+        return filtrados;
+    },
+    totalPaginas() {
+        return Math.ceil(this.productosFiltrados.length / this.itemsPorPagina);
+    },
+    productosPaginados() {
+        const inicio = (this.paginaActual - 1) * this.itemsPorPagina;
+        return this.productosFiltrados.slice(inicio, inicio + this.itemsPorPagina);
+        }
+    },
+    mounted() {
+        this.cargarProductos();
+    },
+    methods: {
+        cargarProductos() {
+        this.$http.get('/api/productos').then(resp => {
+        this.productos = Array.isArray(resp.data) ? resp.data : [];
+        });
+    },
+    abrirFormularioNuevo() {
+        this.productoSeleccionado = { nombre: '', categoria: '', cantidad: 0, cantidadMinima: 0, fechaVencimiento: '', estado: 'activo' };
+        this.$nextTick(() => {
+        const modal = new bootstrap.Modal(document.getElementById('modalProducto'));
+        modal.show();
+        });
+    },
+    editarProducto(producto) {
+        this.productoSeleccionado = Object.assign({}, producto);
+        this.$nextTick(() => {
+        const modal = new bootstrap.Modal(document.getElementById('modalProducto'));
+        modal.show();
+        });
+    },
+    guardarProducto() {
+        const p = this.productoSeleccionado;
+        const peticion = p.id
+        ? this.$http.put(`/api/productos/${p.id}`, p)
+        : this.$http.post('/api/productos', p);
+        peticion.then(() => {
+        bootstrap.Modal.getInstance(document.getElementById('modalProducto')).hide();
+        this.cargarProductos();
+        });
+    },
+    eliminarProducto(id) {
+        if (confirm("¿Estás seguro de que deseas inactivar este producto?")) {
+        this.$http.put(`/api/productos/inactivar/${id}`, { estado: "inactivo" }).then(() => {
+        this.cargarProductos();
+        });
+        }
+    },
+    abrirModalLotes(producto) {
+        this.productoSeleccionado = producto;
+        this.mostrarFormularioLote = false;
+        this.cargarLotes(producto.id);
+        this.$nextTick(() => {
+        const modal = new bootstrap.Modal(document.getElementById('modalLotes'));
+        modal.show();
+        });
+    },
+    cargarLotes(productoId) {
+        this.$http.get(`/api/lotes?productoId=${productoId}`).then(resp => {
+        this.lotes = resp.data;
+        });
+    },
+    abrirFormularioEditarLote(lote) {
+    this.loteNuevo = Object.assign({}, lote);
+    this.esEdicionLote = true;
+    this.mostrarFormularioLote = true;
+    },
+    guardarLote() {
+        this.loteNuevo.productoId = this.productoSeleccionado.id;
+        const peticion = this.esEdicionLote
+        ? this.$http.put(`/api/lotes/${this.loteNuevo.id}`, this.loteNuevo)
+        : this.$http.post('/api/lotes', this.loteNuevo);
+
+        peticion.then(() => {
+        this.cargarLotes(this.productoSeleccionado.id);
+        this.loteNuevo = {};
+        this.mostrarFormularioLote = false;
+        this.cargarProductos();
+        });
+    },
+    inactivarLote(id) {
+        this.$http.put(`/api/lotes/inactivar/${id}`).then(() => {
+        this.cargarLotes(this.productoSeleccionado.id);
+        this.cargarProductos();
+        });
+    },
+    abrirModalConsumir(producto) {
+        this.productoSeleccionado = producto;
+        this.cantidadConsumir = 1;
+        this.$nextTick(() => {
+        const modal = new bootstrap.Modal(document.getElementById('modalConsumir'));
+        modal.show();
+        });
+    },
+    confirmarConsumo() {
+        const id = this.productoSeleccionado.id;
+        const payload = { cantidad: this.cantidadConsumir };
+        this.$http.post(`/api/productos/${id}/consumir`, payload)
+        .then(() => {
+        bootstrap.Modal.getInstance(document.getElementById('modalConsumir')).hide();
+        this.cargarProductos();
+        alert("Stock consumido correctamente");
+        })
+        .catch(err => {
+        console.error(err);
+        alert("Error al consumir stock");
+        });
+    },
+    descargarExcel() {
+        const token = localStorage.getItem('token');
+        this.$http.get('/api/productos/excel', {
+        responseType: 'blob',
+        headers: { 'Authorization': 'Bearer ' + token }
+        }).then(response => {
+        const url = window.URL.createObjectURL(new Blob([response.body]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Inventario.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        });
+    },
+    abrirRequerimientos() {
+        window.location.href = "/productos-solicitados";
+    }
+    }
     });
 </script>
 </body>

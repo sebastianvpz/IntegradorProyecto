@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -56,6 +57,7 @@ public class ProductoController {
         Long restauranteId = jwtUtil.extraerRestauranteId(token);
         producto.setIdRestaurante(restauranteId);
         producto.setFechaIngreso(LocalDate.now().toString());
+        producto.setCantidad(0);
         return productoService.guardar(producto);
     }
 
@@ -152,6 +154,20 @@ public class ProductoController {
 
         workbook.write(response.getOutputStream());
         workbook.close();
+    }
+
+    @PostMapping("/{id}/consumir")
+    public ResponseEntity<Void> consumir(
+            @PathVariable Long id,
+            @RequestBody Map<String, Integer> payload,
+            HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+
+        int cantidad = payload.get("cantidad");
+        productoService.consumirStock(id, restauranteId, cantidad);
+
+        return ResponseEntity.ok().build();
     }
 
 }
