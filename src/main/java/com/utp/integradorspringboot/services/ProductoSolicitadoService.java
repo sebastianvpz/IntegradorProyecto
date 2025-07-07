@@ -23,6 +23,7 @@ public class ProductoSolicitadoService {
         return lista.stream().map(p -> {
             ProductoSolicitadoDto dto = new ProductoSolicitadoDto();
             dto.setId(p.getId());
+            dto.setProductoId(p.getProducto().getId());
             dto.setNombreProducto(p.getProducto().getNombre());
             dto.setCategoria(p.getProducto().getCategoria());
             dto.setCantidad(p.getCantidad());

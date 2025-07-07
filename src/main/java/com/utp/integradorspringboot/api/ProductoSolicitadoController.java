@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/solicitados")
@@ -43,11 +44,13 @@ public class ProductoSolicitadoController {
     @PutMapping("/{id}/estado")
     public ResponseEntity<ProductoSolicitado> cambiarEstado(
             @PathVariable Long id,
-            @RequestParam String estado
+            @RequestBody Map<String, String> body
     ) {
+        String estado = body.get("estado");
         ProductoSolicitado actualizado = service.actualizarEstado(id, estado);
         return actualizado != null
                 ? ResponseEntity.ok(actualizado)
                 : ResponseEntity.notFound().build();
     }
+
 }

@@ -17,4 +17,6 @@ public class ProductoSolicitadoDto {
     private String fechaSolicitud;
     private String solicitadoPor;
     private String estado;
+    private Long productoId;
+
 }
