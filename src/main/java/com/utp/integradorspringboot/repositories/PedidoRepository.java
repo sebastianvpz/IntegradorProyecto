@@ -1,0 +1,67 @@
+package com.utp.integradorspringboot.repositories;
+
+import com.utp.integradorspringboot.models.Pedido;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDate;
+import java.util.List;
+
+public interface PedidoRepository extends JpaRepository<Pedido, Long> {
+
+    @Query("""
+        SELECT COUNT(DISTINCT p.comensal)
+        FROM Pedido p
+        WHERE p.restauranteId = :restauranteId
+          AND DATE(p.fechaCreacion) BETWEEN :inicio AND :fin
+    """)
+    int countClientesDistinctByRestauranteAndFecha(
+            @Param("restauranteId") Long restauranteId,
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin);
+
+    @Query("""
+        SELECT COUNT(p)
+        FROM Pedido p
+        WHERE p.restauranteId = :restauranteId
+          AND DATE(p.fechaCreacion) BETWEEN :inicio AND :fin
+    """)
+    int countByRestauranteAndFecha(
+            @Param("restauranteId") Long restauranteId,
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin);
+
+    @Query("""
+        SELECT COUNT(p)
+        FROM Pedido p
+        WHERE p.restauranteId = :restauranteId
+          AND MONTH(p.fechaCreacion) = :mes
+          AND YEAR(p.fechaCreacion) = :year
+    """)
+    int countPedidosPorMesYAnio(
+            @Param("restauranteId") Long restauranteId,
+            @Param("mes") int mes,
+            @Param("year") int year);
+
+    @Query("""
+        SELECT COUNT(p)
+        FROM Pedido p
+        WHERE p.restauranteId = :restauranteId
+          AND YEAR(p.fechaCreacion) = :year
+        GROUP BY MONTH(p.fechaCreacion)
+        ORDER BY MONTH(p.fechaCreacion)
+    """)
+    List<Integer> countClientesPorMes(
+            @Param("restauranteId") Long restauranteId,
+            @Param("year") int year);
+
+    @Query("""
+        SELECT u.nombre AS mozo, COUNT(p) AS total
+        FROM Pedido p
+        JOIN Usuario u ON u.id = p.usuarioId
+        WHERE p.restauranteId = :restauranteId
+        GROUP BY u.nombre
+    """)
+    List<Object[]> countPedidosPorMozo(
+            @Param("restauranteId") Long restauranteId);
+}
