@@ -1,6 +1,5 @@
 package com.utp.integradorspringboot.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,14 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Representa la entidad Usuario dentro del sistema.
- * Cada usuario está vinculado a un restaurante específico.
- */
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -46,11 +39,12 @@ public class Usuario {
     @Column
     private String estado;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    // 🚨 Relación muchos-a-muchos con roles
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "usuarios_roles",
             joinColumns = @JoinColumn(name = "id_usuario"),
             inverseJoinColumns = @JoinColumn(name = "id_rol")
     )
-    private Set<Rol> roles = new HashSet<>();
+    private Set<Rol> roles;
 }
