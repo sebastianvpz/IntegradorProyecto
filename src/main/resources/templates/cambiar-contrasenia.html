@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
+<head>
+  <title>Cambiar Contraseña</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <div id="vue-cambiar-password">
+    <h3 class="mb-4" style="margin-left: 50px;">Cambiar Contraseña</h3>
+
+    <div class="card" style="max-width: 500px; margin-left: 50px;">
+      <div class="card-body">
+        <form @submit.prevent="cambiarPassword">
+          <div class="mb-3">
+            <label>Contraseña actual</label>
+            <input type="password" class="form-control" v-model="actual" required>
+          </div>
+
+          <div class="mb-3">
+            <label>Nueva contraseña</label>
+            <input type="password" class="form-control" v-model="nueva" required>
+          </div>
+
+          <div class="mb-3">
+            <label>Confirmar nueva contraseña</label>
+            <input type="password" class="form-control" v-model="confirmar" required>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" @click="irAInicio">Cancelar</button>
+            <button type="submit" class="btn btn-success">Cambiar contraseña</button>
+          </div>
+        </form>
+
+        <div v-if="mensaje" class="alert mt-3 text-center" :class="{
+            'alert-success': exito,
+            'alert-danger': !exito
+          }">
+          {{ mensaje }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script layout:fragment="script">
+  new Vue({
+    el: '#vue-cambiar-password',
+    data: {
+      actual: '',
+      nueva: '',
+      confirmar: '',
+      mensaje: '',
+      exito: false,
+      rol: ''
+    },
+    mounted() {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.rol = payload.roles || '';
+      }
+    },
+    methods: {
+      cambiarPassword() {
+        this.mensaje = '';
+        if (this.nueva !== this.confirmar) {
+          this.mensaje = 'La nueva contraseña y la confirmación no coinciden.';
+          this.exito = false;
+          return;
+        }
+
+        const data = {
+          actual: this.actual,
+          nueva: this.nueva
+        };
+
+        this.$http.put('/api/usuarios/cambiar-password', data)
+          .then(() => {
+            this.mensaje = 'Contraseña cambiada correctamente.';
+            this.exito = true;
+            this.actual = '';
+            this.nueva = '';
+            this.confirmar = '';
+          })
+          .catch(() => {
+            this.mensaje = 'La contraseña actual es incorrecta.';
+            this.exito = false;
+          });
+      },
+      irAInicio() {
+        if (this.rol.includes('ADMIN')) {
+          window.location.href = '/dashboard';
+        } else if (this.rol.includes('CHEF')) {
+          window.location.href = '/solicitar-pedido';
+        } else if (this.rol.includes('MOZO')) {
+          window.location.href = '/pedidos';
+        } else {
+          window.location.href = '/'; // fallback
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>

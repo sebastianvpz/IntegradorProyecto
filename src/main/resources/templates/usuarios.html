@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
+
+<head>
+  <title>Gestión de Usuarios</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+  <div id="vue-usuarios">
+    <h3 class="mb-4">Gestión de Usuarios</h3>
+
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+      <div></div>
+      <button class="btn btn-primary" @click="abrirFormularioNuevo">
+        <i class="fas fa-user-plus"></i> Agregar usuario
+      </button>
+    </div>
+
+    <table class="table table-hover table-bordered">
+      <thead class="table-dark">
+      <tr>
+        <th>Nombre</th>
+        <th>Correo</th>
+        <th>Fecha de creación</th>
+        <th>Rol</th>
+        <th>Acciones</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr v-for="usuario in usuarios" :key="usuario.id">
+        <td>{{ usuario.nombre }}</td>
+        <td>{{ usuario.correo }}</td>
+        <td>{{ usuario.fechaCreacion ? usuario.fechaCreacion.split('T')[0] : '-' }}</td>
+        <td>
+          <span v-for="(rol, index) in usuario.roles" :key="rol.id">
+            {{ rol.nombre }}<span v-if="index < usuario.roles.length - 1">, </span>
+          </span>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-warning me-2" @click="editarUsuario(usuario)">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-danger" @click="eliminarUsuario(usuario.id)">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <!-- Modal usuario -->
+    <div class="modal fade" id="modalUsuario" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form @submit.prevent="guardarUsuario">
+            <div class="modal-header">
+              <h5 class="modal-title">{{ usuarioSeleccionado.id ? 'Editar' : 'Agregar' }} Usuario</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-2">
+                <label>Nombre</label>
+                <input type="text" class="form-control" v-model="usuarioSeleccionado.nombre" required>
+              </div>
+              <div class="mb-2">
+                <label>Correo</label>
+                <input type="email" class="form-control" v-model="usuarioSeleccionado.correo" required>
+              </div>
+              <div class="mb-2">
+                <label>Contraseña</label>
+                <input type="password" class="form-control" v-model="usuarioSeleccionado.contrasenia" required>
+              </div>
+              <div class="mb-2">
+                <label>Rol</label>
+                <select class="form-select" v-model="usuarioSeleccionado.rolId" required>
+                  <option disabled value="">Seleccione un rol</option>
+                  <option v-for="rol in roles" :key="rol.id" :value="rol.id">{{ rol.nombre }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-success" type="submit">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Confirmar eliminación -->
+    <div class="modal fade" id="confirmarEliminarModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Confirmar eliminación</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            ¿Estás seguro de que deseas eliminar este usuario?
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button class="btn btn-danger" @click="confirmarEliminacion">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script layout:fragment="script">
+  new Vue({
+    el: '#vue-usuarios',
+    data: {
+      usuarios: [],
+      usuarioSeleccionado: {},
+      roles: [
+        { id: 1, nombre: 'ADMIN' },
+        { id: 2, nombre: 'CHEF' },
+        { id: 3, nombre: 'MOZO' }
+      ],
+      usuarioAEliminarId: null
+    },
+    mounted() {
+      this.cargarUsuarios();
+      // Si prefieres traer roles desde el backend, descomenta esto:
+      // this.cargarRoles();
+    },
+    methods: {
+      cargarUsuarios() {
+        this.$http.get('/api/usuarios').then(resp => {
+          this.usuarios = Array.isArray(resp.data) ? resp.data : [];
+        });
+      },
+      abrirFormularioNuevo() {
+        this.usuarioSeleccionado = {
+          nombre: '',
+          correo: '',
+          contrasenia: '',
+          rolId: ''
+        };
+        this.$nextTick(() => {
+          const modal = new bootstrap.Modal(document.getElementById('modalUsuario'));
+          modal.show();
+        });
+      },
+      editarUsuario(usuario) {
+        this.usuarioSeleccionado = Object.assign({}, usuario);
+        this.usuarioSeleccionado.rolId = usuario.roles?.[0]?.id || '';
+        this.$nextTick(() => {
+          const modal = new bootstrap.Modal(document.getElementById('modalUsuario'));
+          modal.show();
+        });
+      },
+      guardarUsuario() {
+        const u = {
+          ...this.usuarioSeleccionado
+        };
+
+        const peticion = u.id
+          ? this.$http.put(`/api/usuarios/${u.id}`, u)
+          : this.$http.post('/api/usuarios', u);
+
+        peticion.then(() => {
+          bootstrap.Modal.getInstance(document.getElementById('modalUsuario')).hide();
+          this.cargarUsuarios();
+        });
+      },
+      eliminarUsuario(id) {
+        this.usuarioAEliminarId = id;
+        const modal = new bootstrap.Modal(document.getElementById('confirmarEliminarModal'));
+        modal.show();
+      },
+      confirmarEliminacion() {
+        this.$http.put(`/api/usuarios/inactivar/${this.usuarioAEliminarId}`).then(() => {
+          bootstrap.Modal.getInstance(document.getElementById('confirmarEliminarModal')).hide();
+          this.cargarUsuarios();
+        });
+      }
+    }
+  });
+</script>
+</body>
+</html>

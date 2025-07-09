@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
+<head>
+  <title>Productos Solicitados</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <div id="vue-solicitados">
+    <h3 class="mb-4">Productos Solicitados por el Chef</h3>
+
+    <table class="table table-hover table-bordered">
+      <thead class="table-dark">
+      <tr>
+        <th>Nombre</th>
+        <th>Categoría</th>
+        <th>Cantidad</th>
+        <th>Fecha de solicitud</th>
+        <th>Solicitado por</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr v-for="p in solicitados" :key="p.id">
+        <td>{{ p.nombreProducto }}</td>
+        <td>{{ p.categoria }}</td>
+        <td>{{ p.cantidad }}</td>
+        <td>{{ p.fechaSolicitud?.split('T')[0] }}</td>
+        <td>{{ p.solicitadoPor }}</td>
+        <td>
+            <span :class="{
+              'badge bg-warning text-dark': p.estado === 'pendiente',
+              'badge bg-success': p.estado === 'aceptado',
+              'badge bg-danger': p.estado === 'denegado'
+            }">
+              {{ p.estado }}
+            </span>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-success me-1"
+                  @click="abrirModalAceptar(p)"
+                  :disabled="p.estado !== 'pendiente'">
+            <i class="fas fa-check"></i>
+          </button>
+          <button class="btn btn-sm btn-danger"
+                  @click="cambiarEstado(p.id, 'denegado')"
+                  :disabled="p.estado !== 'pendiente'">
+            <i class="fas fa-times"></i>
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <!-- Modal aceptar -->
+    <div class="modal fade" id="modalAceptar" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form @submit.prevent="confirmarAceptar">
+            <div class="modal-header">
+              <h5 class="modal-title">Aceptar solicitud</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <p><strong>Nombre:</strong> {{ solicitudSeleccionada.nombreProducto }}</p>
+              <p><strong>Categoría:</strong> {{ solicitudSeleccionada.categoria }}</p>
+              <div class="mb-2">
+                <label>Cantidad</label>
+                <input type="number" class="form-control" v-model="lote.cantidad" min="1" required>
+              </div>
+              <p><strong>Solicitado por:</strong> {{ solicitudSeleccionada.solicitadoPor }}</p>
+
+              <div class="mb-2">
+                <label>Proveedor</label>
+                <input type="text" class="form-control" v-model="lote.proveedor" required>
+              </div>
+              <div class="mb-2">
+                <label>Fecha vencimiento</label>
+                <input type="date" class="form-control" v-model="lote.fechaVencimiento">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-success" type="submit">Aceptar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script layout:fragment="script">
+  new Vue({
+    el: '#vue-solicitados',
+    data: {
+      solicitados: [],
+      solicitudSeleccionada: {},
+      lote: {
+        proveedor: '',
+        fechaVencimiento: ''
+      }
+    },
+    mounted() {
+      this.cargarSolicitudes();
+    },
+    methods: {
+      cargarSolicitudes() {
+        const token = localStorage.getItem('token');
+        this.$http.get('/api/solicitados', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        }).then(resp => {
+          this.solicitados = Array.isArray(resp.data) ? resp.data : [];
+        }).catch(err => {
+          console.error("Error al cargar productos solicitados:", err);
+        });
+      },
+      abrirModalAceptar(solicitud) {
+        this.solicitudSeleccionada = solicitud;
+        this.lote = {
+          cantidad: this.solicitudSeleccionada.cantidad,
+          proveedor: '',
+          fechaVencimiento: ''
+        };
+        this.$nextTick(() => {
+          const modal = new bootstrap.Modal(document.getElementById('modalAceptar'));
+          modal.show();
+        });
+      },
+      confirmarAceptar() {
+        this.$http.put(`/api/solicitados/${this.solicitudSeleccionada.id}/estado`, { estado: 'aceptado' })
+          .then(() => {
+            const lote = {
+              productoId: this.solicitudSeleccionada.productoId,
+              cantidad: this.lote.cantidad,
+              fechaIngreso: new Date().toISOString().split('T')[0],
+              fechaVencimiento: this.lote.fechaVencimiento,
+              proveedor: this.lote.proveedor
+            };
+            return this.$http.post('/api/lotes', lote);
+          })
+          .then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('modalAceptar')).hide();
+            this.cargarSolicitudes();
+          })
+          .catch(err => {
+            console.error(err);
+            alert("Error al aceptar la solicitud");
+          });
+      },
+      cambiarEstado(id, nuevoEstado) {
+        this.$http.put(`/api/solicitados/${id}/estado`, { estado: nuevoEstado }).then(() => {
+          this.cargarSolicitudes();
+        });
+      }
+    }
+  });
+</script>
+</body>
+</html>

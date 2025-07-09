@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
+<head>
+  <title>Gestión de Zonas y Mesas</title>
+  <style>
+    .mesa-cuadro {
+      width: 120px;
+      height: 120px;
+      background-color: #007bff;
+      position: absolute;
+      margin: 10px;
+      cursor: grab;
+      border-radius: 8px;
+      user-select: none;
+    }
+
+    .mesa-cuadro.mesa-seleccionada {
+      outline: 3px solid #28a745;
+    }
+
+    .mesa-numero {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 25px;
+      background-color: #0056b3;
+      color: white;
+      text-align: center;
+      line-height: 25px;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    #plano {
+      min-height: 500px;
+      border: 4px solid #999;
+      padding: 10px;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+<div layout:fragment="content">
+  <div id="vue-zonas">
+    <h3 class="mb-4">Gestión de Zonas y Mesas</h3>
+
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+      <div>
+        <label><strong>Zonas:</strong></label>
+        <select class="form-select d-inline-block w-auto" v-model="zonaSeleccionadaId" @change="onZonaChange">
+          <option v-for="z in zonas" :value="z.id">{{ z.nombre }}</option>
+          <option value="nueva">+ Nueva Zona</option>
+        </select>
+      </div>
+      <button class="btn btn-warning" @click="abrirModalEditarZona" :disabled="!zonaSeleccionadaId">
+        <i class="fas fa-edit"></i> Editar Zona
+      </button>
+    </div>
+
+    <div class="d-flex">
+      <div class="flex-grow-1 border p-3 position-relative" id="plano">
+        <div v-for="m in mesas"
+             :key="m.id"
+             class="mesa-cuadro"
+             :class="{ 'mesa-seleccionada': m.id === mesaSeleccionada.id }"
+             :style="{ left: m.posX + 'px', top: m.posY + 'px' }"
+             @mousedown="iniciarDrag($event, m)"
+             @click="seleccionarMesa(m)">
+          <div class="mesa-numero">
+            {{ m.numeroMesa }}
+          </div>
+        </div>
+      </div>
+
+      <div class="ms-4 border p-3" style="width: 300px;" v-if="mesaSeleccionada.id">
+        <h5>Detalle Mesa</h5>
+        <div class="mb-2">
+          <label>Número de Mesa</label>
+          <input type="text" class="form-control" v-model="mesaSeleccionada.numeroMesa">
+        </div>
+        <div class="mb-2">
+          <label>Capacidad</label>
+          <input type="number" class="form-control" v-model="mesaSeleccionada.capacidad">
+        </div>
+        <div class="mb-2">
+          <label>Etiqueta</label>
+          <input type="text" class="form-control" v-model="mesaSeleccionada.etiqueta">
+        </div>
+        <button class="btn btn-success mt-2" @click="guardarMesa">Guardar</button>
+        <button class="btn btn-secondary mt-2" @click="mesaSeleccionada = {}">Cerrar</button>
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <button class="btn btn-success" @click="abrirModalNuevaMesa" :disabled="!zonaSeleccionadaId">
+        <i class="fas fa-plus"></i> Nueva Mesa
+      </button>
+    </div>
+
+    <!-- Modal Nueva Zona -->
+    <div class="modal fade" id="modalNuevaZona" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form @submit.prevent="guardarZona">
+            <div class="modal-header">
+              <h5 class="modal-title">Nueva Zona</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-2">
+                <label>Nombre</label>
+                <input type="text" class="form-control" v-model="nuevaZona.nombre" required>
+              </div>
+              <div class="mb-2">
+                <label>Cantidad de Mesas</label>
+                <input type="number" class="form-control" v-model="nuevaZona.cantidadMesas" required>
+              </div>
+              <div class="mb-2">
+                <label>Nota</label>
+                <textarea class="form-control" v-model="nuevaZona.nota"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-success" type="submit">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Editar Zona -->
+    <div class="modal fade" id="modalEditarZona" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form @submit.prevent="actualizarZona">
+            <div class="modal-header">
+              <h5 class="modal-title">Editar Zona</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-2">
+                <label>Nombre</label>
+                <input type="text" class="form-control" v-model="zonaSeleccionada.nombre" required>
+              </div>
+              <div class="mb-2">
+                <label>Nota</label>
+                <textarea class="form-control" v-model="zonaSeleccionada.nota"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-success" type="submit">Actualizar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Nueva Mesa -->
+    <div class="modal fade" id="modalNuevaMesa" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form @submit.prevent="guardarMesaNueva">
+            <div class="modal-header">
+              <h5 class="modal-title">Nueva Mesa</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-2">
+                <label>Número de Mesa</label>
+                <input type="text" class="form-control" v-model="nuevaMesa.numeroMesa" required>
+              </div>
+              <div class="mb-2">
+                <label>Capacidad</label>
+                <input type="number" class="form-control" v-model="nuevaMesa.capacidad" required>
+              </div>
+              <div class="mb-2">
+                <label>Etiqueta</label>
+                <input type="text" class="form-control" v-model="nuevaMesa.etiqueta">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-success" type="submit">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script layout:fragment="script">
+  new Vue({
+    el: '#vue-zonas',
+    data: {
+      zonas: [],
+      zonaSeleccionadaId: null,
+      zonaSeleccionada: {},
+      mesas: [],
+      mesaSeleccionada: {},
+      nuevaZona: { nombre: '', cantidadMesas: 0, nota: '' },
+      nuevaMesa: { numeroMesa: '', capacidad: 0, etiqueta: '' },
+      dragging: false,
+      draggedMesa: null,
+      offsetX: 0,
+      offsetY: 0
+    },
+    mounted() {
+      this.cargarZonas();
+    },
+    methods: {
+      onZonaChange() {
+        if (this.zonaSeleccionadaId === 'nueva') {
+          this.abrirModalNuevaZona();
+          this.zonaSeleccionadaId = this.zonas.length > 0 ? this.zonas[0].id : null;
+        } else {
+          this.cargarMesas();
+        }
+      },
+      cargarZonas() {
+        this.$http.get('/api/zonas').then(resp => {
+          this.zonas = resp.data;
+          if (this.zonas.length > 0) {
+            this.zonaSeleccionadaId = this.zonas[0].id;
+            this.cargarMesas();
+          }
+        });
+      },
+      cargarMesas() {
+        this.$http.get(`/api/mesas/por-zona/${this.zonaSeleccionadaId}`).then(resp => {
+          this.mesas = resp.data;
+          this.zonaSeleccionada = this.zonas.find(z => z.id === this.zonaSeleccionadaId);
+          this.mesaSeleccionada = {};
+        });
+      },
+      seleccionarMesa(mesa) {
+        if (this.mesaSeleccionada.id === mesa.id) {
+          this.mesaSeleccionada = {};
+        } else {
+          this.mesaSeleccionada = { ...mesa };
+        }
+      },
+      guardarMesa() {
+        this.$http.put(`/api/mesas/${this.mesaSeleccionada.id}`, this.mesaSeleccionada).then(() => {
+          this.cargarMesas();
+          alert("Mesa actualizada");
+        });
+      },
+      abrirModalNuevaZona() {
+        this.nuevaZona = { nombre: '', cantidadMesas: 0, nota: '' };
+        new bootstrap.Modal(document.getElementById('modalNuevaZona')).show();
+      },
+      guardarZona() {
+        this.$http.post('/api/zonas', this.nuevaZona).then(() => {
+          bootstrap.Modal.getInstance(document.getElementById('modalNuevaZona')).hide();
+          this.cargarZonas();
+        });
+      },
+      abrirModalEditarZona() {
+        new bootstrap.Modal(document.getElementById('modalEditarZona')).show();
+      },
+      actualizarZona() {
+        this.$http.put(`/api/zonas/${this.zonaSeleccionada.id}`, this.zonaSeleccionada).then(() => {
+          bootstrap.Modal.getInstance(document.getElementById('modalEditarZona')).hide();
+          this.cargarZonas();
+        });
+      },
+      abrirModalNuevaMesa() {
+        this.nuevaMesa = { numeroMesa: '', capacidad: 0, etiqueta: '' };
+        new bootstrap.Modal(document.getElementById('modalNuevaMesa')).show();
+      },
+      guardarMesaNueva() {
+        const payload = {
+          numeroMesa: this.nuevaMesa.numeroMesa,
+          capacidad: this.nuevaMesa.capacidad,
+          etiqueta: this.nuevaMesa.etiqueta,
+          estado: 'disponible',
+          restauranteId: this.zonaSeleccionada.restauranteId,
+          zona: { id: this.zonaSeleccionada.id }
+        };
+        this.$http.post('/api/mesas', payload).then(() => {
+          bootstrap.Modal.getInstance(document.getElementById('modalNuevaMesa')).hide();
+          this.cargarMesas();
+        });
+      },
+      iniciarDrag(e, mesa) {
+        this.dragging = true;
+        this.draggedMesa = mesa;
+        this.offsetX = e.offsetX;
+        this.offsetY = e.offsetY;
+
+        document.addEventListener('mousemove', this.arrastrar);
+        document.addEventListener('mouseup', this.soltar);
+      },
+      arrastrar(e) {
+        if (!this.dragging) return;
+
+        const plano = document.getElementById('plano');
+        const rect = plano.getBoundingClientRect();
+
+        this.draggedMesa.posX = e.clientX - rect.left - this.offsetX;
+        this.draggedMesa.posY = e.clientY - rect.top - this.offsetY;
+      },
+      soltar() {
+        if (!this.dragging) return;
+
+        this.$http.put(`/api/mesas/${this.draggedMesa.id}`, this.draggedMesa).then(() => {
+          console.log("Mesa actualizada en backend");
+        });
+
+        this.dragging = false;
+        this.draggedMesa = null;
+
+        document.removeEventListener('mousemove', this.arrastrar);
+        document.removeEventListener('mouseup', this.soltar);
+      }
+    }
+  });
+</script>
+</body>
+</html>

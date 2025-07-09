@@ -1,0 +1,152 @@
+<html layout:decorate="_layout">
+    <head>
+        <title>Proyecto Integrador 1</title>
+    </head>
+    <body>
+        <div layout:fragment="content">
+            <h1>Gestión de carta</h1>
+            <p class="text-end">
+                <button><img src="../filtro.png" style="width: 20px"> Filtro</button>
+            </p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Precio</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="item in entidades">
+                        <td>{{item.id}}</td>
+                        <td>{{item.nombre}}</td>
+                        <td>{{item.descripcion}}</td>
+                        <td>{{item.precio}}</td>
+                        <td class="text-center">
+                            <button class="btn btn-primary" @click="editar(item.id)">Editar</button>
+                            <button class="btn btn-danger" @click="eliminar(item.id)">Eliminar</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="modal" tabindex="-1" id="mdlEntidad">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" v-if="entidad.id==0">Agregar</h5>
+                            <h5 class="modal-title" v-if="entidad.id!=0">Editar</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group row">
+                                <label for="nombre" class="col-sm-7 col-form-label">Nombre</label>
+                                <div class="col-sm-7">
+                                    <input class="form-control" id="nombre" v-model="entidad.nombre" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="descripcion" class="col-sm-7 col-form-label">Descripción</label>
+                                <div class="col-sm-7">
+                                    <input class="form-control" id="descripcion" v-model="entidad.descripcion" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="precio" class="col-sm-7 col-form-label">Precio en soles</label>
+                                <div class="col-sm-7">
+                                    <input class="form-control" id="precio" v-model="entidad.precio" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" v-if="entidad.id==0" @click="guardar">Guardar</button>
+                            <button type="button" class="btn btn-primary" v-if="entidad.id!=0" @click="actualizar">Actualizar</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal" tabindex="-1" id="mdlEliminar">
+                <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Eliminar</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ¿Estás seguro que quieres eliminar?
+                        </div>
+                        <div class="text-center">
+                        <img src="../eliminar.png" style="width: 80px">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" @click="confimareliminacion">Eliminar</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center">
+                <button style="background-color: #4fff33; color: white;" @click="nuevo">Agregar</button>
+            </p>
+        </div>
+        <script layout:fragment="script">
+            new Vue({
+                el: "#app",
+                data: {
+                    entidades: [],
+                    entidad: []
+                },
+                methods: {
+                    listar: function () {
+                        this.$http.get('/api/platos').then(response => {
+                            this.entidades = response.data;
+                        });
+                    },
+                    nuevo: function () {
+                        this.entidad = {
+                            id: 0,
+                            nombre: "",
+                            descripcion: "",
+                            precio: ""
+                        };
+                        $("#mdlEntidad").modal("show");
+                    },
+                    editar: function (id) {
+                        this.$http.get('/api/platos/' + id).then(response => {
+                            this.entidad = response.data;
+                            $("#mdlEntidad").modal("show");
+                        });
+                    },
+                    guardar: function () {
+                        this.$http.post('/api/platos', this.entidad).then(response => {
+                            this.listar();
+                            $("#mdlEntidad").modal("hide");
+                        });
+                    },
+                    actualizar: function () {
+                        this.$http.put('/api/platos/' + this.entidad.id, this.entidad).then(response => {
+                            this.listar();
+                            $("#mdlEntidad").modal("hide");
+                        });
+                    },
+                    eliminar: function (id) {
+                        this.entidad.id = id;
+                        $("#mdlEliminar").modal("show");
+                    },
+                    confimareliminacion: function () {
+                        this.$http.delete('/api/platos/' + this.entidad.id).then(response => {
+                            this.listar();
+                            $("#mdlEliminar").modal("hide");
+                        });
+                    }
+                },
+                mounted: function () {
+                    this.listar();
+                }
+            });
+        </script>
+    </body>
+</html>

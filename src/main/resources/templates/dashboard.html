@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
+<head>
+  <title>Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div layout:fragment="content">
+  <div id="vue-dashboard">
+    <h3 class="mb-4">Dashboard</h3>
+
+    <div class="d-flex gap-3 mb-4">
+      <select class="form-select w-auto" v-model="mesSeleccionado" @change="cargarDashboard">
+        <option v-for="(m, index) in meses" :value="index+1">{{ m }}</option>
+      </select>
+
+      <select class="form-select w-auto" v-model="anioSeleccionado" @change="cargarDashboard">
+        <option v-for="a in anios">{{ a }}</option>
+      </select>
+    </div>
+
+    <div class="row text-center mb-4">
+      <div class="col bg-light p-3 m-2 rounded">
+        <h5>Clientes del mes</h5>
+        <h3>{{ datos.clientesDelMes }}</h3>
+      </div>
+      <div class="col bg-light p-3 m-2 rounded">
+        <h5>Ingresos del mes</h5>
+        <h3>S/ {{ datos.ingresosDelMes.toFixed(2) }}</h3>
+      </div>
+      <div class="col bg-light p-3 m-2 rounded">
+        <h5>Órdenes del mes</h5>
+        <h3>{{ datos.ordenesDelMes }}</h3>
+      </div>
+      <div class="col bg-light p-3 m-2 rounded">
+        <h5>Egresos del mes</h5>
+        <h3>S/ {{ datos.egresosDelMes.toFixed(2) }}</h3>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <canvas id="lineaClientes"></canvas>
+      </div>
+      <div class="col-md-6">
+        <canvas id="pieMozos"></canvas>
+      </div>
+    </div>
+
+    <div class="row mt-4">
+      <div class="col">
+        <canvas id="barrasIngresosEgresos"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script layout:fragment="script">
+  new Vue({
+    el: '#vue-dashboard',
+    data: {
+      datos: {},
+      meses: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+              'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+      anios: [2024, 2025],
+      mesSeleccionado: new Date().getMonth() + 1,
+      anioSeleccionado: new Date().getFullYear(),
+      charts: {}
+    },
+    mounted() {
+      this.cargarDashboard();
+    },
+    methods: {
+      cargarDashboard() {
+        this.$http.get(`/api/dashboard?mes=${this.mesSeleccionado}&anio=${this.anioSeleccionado}`)
+          .then(resp => {
+            this.datos = resp.data;
+            this.renderCharts();
+          });
+      },
+      renderCharts() {
+        // Línea clientes
+        if (this.charts.lineaClientes) this.charts.lineaClientes.destroy();
+        const ctx1 = document.getElementById('lineaClientes').getContext('2d');
+        this.charts.lineaClientes = new Chart(ctx1, {
+          type: 'line',
+          data: {
+            labels: this.meses,
+            datasets: [
+              { label: '2024', data: this.datos.clientesPorMes2024, borderColor: 'blue', fill: false },
+              { label: '2025', data: this.datos.clientesPorMes2025, borderColor: 'green', fill: false }
+            ]
+          }
+        });
+
+        // Pie mozos
+        if (this.charts.pieMozos) this.charts.pieMozos.destroy();
+        const ctx2 = document.getElementById('pieMozos').getContext('2d');
+        this.charts.pieMozos = new Chart(ctx2, {
+          type: 'pie',
+          data: {
+            labels: Object.keys(this.datos.clientesPorMozo),
+            datasets: [{
+              data: Object.values(this.datos.clientesPorMozo),
+              backgroundColor: ['red', 'blue', 'green', 'orange', 'purple']
+            }]
+          }
+        });
+
+        // Barras ingresos/egresos
+        if (this.charts.barrasIngresosEgresos) this.charts.barrasIngresosEgresos.destroy();
+        const ctx3 = document.getElementById('barrasIngresosEgresos').getContext('2d');
+        this.charts.barrasIngresosEgresos = new Chart(ctx3, {
+          type: 'bar',
+          data: {
+            labels: this.meses,
+            datasets: [
+              { label: 'Ingresos', data: this.datos.ingresosPorMes, backgroundColor: 'green' },
+              { label: 'Egresos', data: this.datos.egresosPorMes, backgroundColor: 'red' }
+            ]
+          }
+        });
+      }
+    }
+  });
+</script>
+</body>
+</html>
