@@ -1,12 +1,14 @@
 package com.utp.integradorspringboot.api;
 
-import com.utp.integradorspringboot.dto.UsuarioDTO;
-
+import com.utp.integradorspringboot.dto.UsuarioDto;
 import com.utp.integradorspringboot.models.Usuario;
+import com.utp.integradorspringboot.security.JwtUtil;
 import com.utp.integradorspringboot.services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -22,14 +24,20 @@ public class UsuarioController {
     @Autowired
     private UsuarioService usuarioService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     /**
-     * Lista todos los usuarios activos.
+     * Lista todos los usuarios activos de un restaurante.
      *
-     * @return Lista de usuarios con estado 'activo'
+     * @param request Petición HTTP para extraer el token JWT
+     * @return Lista de usuarios activos del restaurante
      */
     @GetMapping
-    public List<Usuario> listar() {
-        return usuarioService.listarActivos();
+    public List<Usuario> listar(HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+        return usuarioService.listarActivosPorRestaurante(restauranteId);
     }
 
     /**
@@ -52,32 +60,36 @@ public class UsuarioController {
      * @return Usuario creado
      */
     @PostMapping
-    public Usuario crear(@RequestBody UsuarioDTO dto) {
-        return usuarioService.guardarDesdeDTO(dto);
+    public Usuario crear(@RequestBody UsuarioDto dto, HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+        return usuarioService.guardarDesdeDTO(dto, restauranteId);
     }
 
     /**
      * Actualiza un usuario existente.
      *
-     * @param id      ID del usuario a actualizar
-     * @param usuario Nuevos datos del usuario
+     * @param id  ID del usuario a actualizar
+     * @param dto Nuevos datos del usuario
      * @return Usuario actualizado o 404 si no se encuentra
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> actualizar(@PathVariable Long id, @RequestBody UsuarioDTO dto) {
+    public ResponseEntity<Usuario> actualizar(@PathVariable Long id, @RequestBody UsuarioDto dto, HttpServletRequest request) {
         if (!id.equals(dto.getId())) {
             return ResponseEntity.badRequest().build();
         }
 
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+
         try {
-            Usuario actualizado = usuarioService.guardarDesdeDTO(dto);
+            Usuario actualizado = usuarioService.guardarDesdeDTO(dto, restauranteId);
             return ResponseEntity.ok(actualizado);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).build();
         }
     }
-
 
     /**
      * Inactiva un usuario, cambiando su estado a 'inactivo'.

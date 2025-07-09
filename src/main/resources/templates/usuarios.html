@@ -33,11 +33,10 @@
         <td>{{ usuario.correo }}</td>
         <td>{{ usuario.fechaCreacion ? usuario.fechaCreacion.split('T')[0] : '-' }}</td>
         <td>
-              <span v-for="(rol, index) in usuario.roles" :key="rol.id">
-                {{ rol.nombre }}<span v-if="index < usuario.roles.length - 1">, </span>
-              </span>
+          <span v-for="(rol, index) in usuario.roles" :key="rol.id">
+            {{ rol.nombre }}<span v-if="index < usuario.roles.length - 1">, </span>
+          </span>
         </td>
-
         <td>
           <button class="btn btn-sm btn-warning me-2" @click="editarUsuario(usuario)">
             <i class="fas fa-edit"></i>
@@ -50,7 +49,7 @@
       </tbody>
     </table>
 
-    <!-- Modal -->
+    <!-- Modal usuario -->
     <div class="modal fade" id="modalUsuario" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -88,9 +87,8 @@
         </div>
       </div>
     </div>
-    <!-- Fin Modal -->
 
-    <!-- Modal Confirmación Eliminación -->
+    <!-- Modal Confirmar eliminación -->
     <div class="modal fade" id="confirmarEliminarModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -118,22 +116,22 @@
     data: {
       usuarios: [],
       usuarioSeleccionado: {},
-      roles: [],
+      roles: [
+        { id: 1, nombre: 'ADMIN' },
+        { id: 2, nombre: 'CHEF' },
+        { id: 3, nombre: 'MOZO' }
+      ],
       usuarioAEliminarId: null
     },
     mounted() {
       this.cargarUsuarios();
-      this.cargarRoles();
+      // Si prefieres traer roles desde el backend, descomenta esto:
+      // this.cargarRoles();
     },
     methods: {
       cargarUsuarios() {
         this.$http.get('/api/usuarios').then(resp => {
           this.usuarios = Array.isArray(resp.data) ? resp.data : [];
-        });
-      },
-      cargarRoles() {
-        this.$http.get('/api/roles').then(resp => {
-          this.roles = Array.isArray(resp.data) ? resp.data : [];
         });
       },
       abrirFormularioNuevo() {
@@ -150,7 +148,7 @@
       },
       editarUsuario(usuario) {
         this.usuarioSeleccionado = Object.assign({}, usuario);
-        this.usuarioSeleccionado.rolId = usuario.roles?.[0]?.id || ''; // 👈 nuevo
+        this.usuarioSeleccionado.rolId = usuario.roles?.[0]?.id || '';
         this.$nextTick(() => {
           const modal = new bootstrap.Modal(document.getElementById('modalUsuario'));
           modal.show();
@@ -158,8 +156,7 @@
       },
       guardarUsuario() {
         const u = {
-          ...this.usuarioSeleccionado,
-          roles: [{ id: this.usuarioSeleccionado.rolId }] // 👈 necesario para que JPA actualice usuarios_roles
+          ...this.usuarioSeleccionado
         };
 
         const peticion = u.id
@@ -170,15 +167,6 @@
           bootstrap.Modal.getInstance(document.getElementById('modalUsuario')).hide();
           this.cargarUsuarios();
         });
-      },
-
-
-      eliminarUsuario(id) {
-        if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-          this.$http.put(`/api/usuarios/inactivar/${id}`).then(() => {
-            this.cargarUsuarios();
-          });
-        }
       },
       eliminarUsuario(id) {
         this.usuarioAEliminarId = id;
@@ -195,5 +183,4 @@
   });
 </script>
 </body>
-
 </html>

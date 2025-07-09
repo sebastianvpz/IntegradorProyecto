@@ -73,7 +73,7 @@
               localStorage.setItem('roles', payload.roles);
 
               if (payload.roles.includes("ADMIN")) {
-                window.location.href = "/usuarios";
+                window.location.href = "/dashboard";
               } else if (payload.roles.includes("MOZO")) {
                 window.location.href = "/pedidos";
               } else if (payload.roles.includes("CHEF")) {

@@ -1,7 +1,7 @@
 package com.utp.integradorspringboot.services;
 
-import com.utp.integradorspringboot.dto.UsuarioDTO;
 
+import com.utp.integradorspringboot.dto.UsuarioDto;
 import com.utp.integradorspringboot.models.Rol;
 import com.utp.integradorspringboot.models.Usuario;
 import com.utp.integradorspringboot.repositories.RolRepository;
@@ -12,6 +12,7 @@ import com.utp.integradorspringboot.repositories.UsuarioRepository;
 // import jakarta.persistence.ManyToMany;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -28,15 +29,19 @@ public class UsuarioService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
-     * Retorna la lista de usuarios activos (estado = 'activo').
+     * Retorna la lista de usuarios activos de un restaurante.
      *
-     * @return Lista de usuarios activos
+     * @param restauranteId ID del restaurante
+     * @return Lista de usuarios activos en el restaurante
      */
-    public List<Usuario> listarActivos() {
-        return usuarioRepository.findByEstado("activo");
+    public List<Usuario> listarActivosPorRestaurante(Long restauranteId) {
+        return usuarioRepository.findByEstadoAndRestauranteId("activo", restauranteId);
     }
+
 
     /**
      * Busca un usuario por su ID.
@@ -48,26 +53,6 @@ public class UsuarioService {
         return usuarioRepository.findById(id);
     }
 
-    /**
-     * Guarda un nuevo usuario o actualiza uno existente.
-     * Se asegura de establecer fecha de creación, estado y restaurante por defecto
-     * si no se proporcionan.
-     *
-     * @param usuario Usuario a guardar
-     * @return Usuario persistido
-     */
-    public Usuario guardar(Usuario usuario) {
-        if (usuario.getFechaCreacion() == null) {
-            usuario.setFechaCreacion(LocalDateTime.now());
-        }
-        if (usuario.getEstado() == null) {
-            usuario.setEstado("activo");
-        }
-        if (usuario.getRestauranteId() == null) {
-            usuario.setRestauranteId(1L); // valor por defecto
-        }
-        return usuarioRepository.save(usuario);
-    }
 
     /**
      * Inactiva un usuario cambiando su estado a 'inactivo'.
@@ -97,8 +82,8 @@ public class UsuarioService {
     @Autowired
     private RolRepository rolRepository;
 
-    public Usuario guardarDesdeDTO(UsuarioDTO dto) {
-        Rol rol = rolRepository.findById(dto.getRolId().intValue())
+    public Usuario guardarDesdeDTO(UsuarioDto dto, Long restauranteId) {
+        Rol rol = rolRepository.findById(dto.getRolId().longValue())
                 .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
 
         Usuario usuario = (dto.getId() != null)
@@ -107,9 +92,11 @@ public class UsuarioService {
 
         usuario.setNombre(dto.getNombre());
         usuario.setCorreo(dto.getCorreo());
-        usuario.setContrasenia(dto.getContrasenia());
+        if (dto.getContrasenia() != null && !dto.getContrasenia().isEmpty()) {
+            usuario.setContrasenia(passwordEncoder.encode(dto.getContrasenia()));
+        }
         usuario.setEstado(dto.getEstado() != null ? dto.getEstado() : "activo");
-        usuario.setRestauranteId(dto.getRestauranteId() != null ? dto.getRestauranteId() : 1L);
+        usuario.setRestauranteId(restauranteId); //
         usuario.setFechaCreacion(usuario.getFechaCreacion() != null
                 ? usuario.getFechaCreacion()
                 : LocalDateTime.now());
@@ -120,5 +107,6 @@ public class UsuarioService {
 
         return usuarioRepository.save(usuario);
     }
+
 
 }
