@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
+
+<head>
+  <title>Mi Perfil</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+  <div id="vue-perfil">
+    <h3 class="mb-4" style="margin-left: 50px;">Mi Perfil</h3>
+
+    <div class="card" style="max-width: 500px; margin-left: 50px;">
+      <div class="card-body">
+        <form @submit.prevent="guardarPerfil">
+          <div class="mb-3">
+            <label>Nombre</label>
+            <input type="text" class="form-control" v-model="perfil.nombre" required>
+          </div>
+          <div class="mb-3">
+            <label>Correo</label>
+            <input type="email" class="form-control" v-model="perfil.correo" required>
+          </div>
+          <div class="mb-3">
+            <label>Rol</label>
+            <input type="text" class="form-control" :value="perfil.roles?.[0]?.nombre" readonly>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" @click="irAInicio">Cancelar</button>
+            <button type="submit" class="btn btn-success">Guardar</button>
+          </div>
+        </form>
+
+        <div v-if="mensaje" class="alert mt-3 text-center" :class="{
+            'alert-success': exito,
+            'alert-danger': !exito
+          }">
+          {{ mensaje }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script layout:fragment="script">
+  new Vue({
+    el: '#vue-perfil',
+    data: {
+      perfil: {},
+      mensaje: '',
+      exito: false,
+      rol: ''
+    },
+    mounted() {
+      const token = localStorage.getItem('token');
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const idUsuario = payload.id;
+
+      this.rol = payload.roles || '';
+
+      this.$http.get(`/api/usuarios/${idUsuario}`).then(resp => {
+        this.perfil = resp.data;
+        this.perfil.contrasenia = "";
+        this.perfil.rolId = this.perfil.roles?.[0]?.id || null;
+      });
+    },
+    methods: {
+      guardarPerfil() {
+        this.mensaje = '';
+        this.$http.put(`/api/usuarios/${this.perfil.id}`, this.perfil).then(() => {
+          this.mensaje = 'Perfil actualizado correctamente.';
+          this.exito = true;
+        }).catch(() => {
+          this.mensaje = 'Ocurrió un error al actualizar el perfil.';
+          this.exito = false;
+        });
+      },
+      irAInicio() {
+        if (this.rol.includes('ADMIN')) {
+          window.location.href = '/dashboard';
+        } else if (this.rol.includes('CHEF')) {
+          window.location.href = '/solicitar-pedido';
+        } else if (this.rol.includes('MOZO')) {
+          window.location.href = '/pedidos';
+        } else {
+          window.location.href = '/';
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

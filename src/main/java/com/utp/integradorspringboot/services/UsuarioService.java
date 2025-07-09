@@ -32,6 +32,9 @@ public class UsuarioService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private RolRepository rolRepository;
+
     /**
      * Retorna la lista de usuarios activos de un restaurante.
      *
@@ -73,14 +76,11 @@ public class UsuarioService {
     /**
      * Devuelve los roles asociados a un usuario.
      */
-
     public Set<Rol> obtenerRolesDeUsuario(Long idUsuario) {
         Optional<Usuario> usuario = usuarioRepository.findById(idUsuario);
         return usuario.map(Usuario::getRoles).orElse(null);
     }
 
-    @Autowired
-    private RolRepository rolRepository;
 
     public Usuario guardarDesdeDTO(UsuarioDto dto, Long restauranteId) {
         Rol rol = rolRepository.findById(dto.getRolId().longValue())
@@ -107,6 +107,35 @@ public class UsuarioService {
 
         return usuarioRepository.save(usuario);
     }
+
+    public Usuario actualizarPerfil(UsuarioDto dto) {
+        Usuario usuario = usuarioRepository.findById(dto.getId())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        usuario.setNombre(dto.getNombre());
+        usuario.setCorreo(dto.getCorreo());
+
+        return usuarioRepository.save(usuario);
+    }
+
+    public boolean cambiarPassword(Long idUsuario, String actual, String nueva) {
+        Optional<Usuario> opt = usuarioRepository.findById(idUsuario);
+
+        if (opt.isPresent()) {
+            Usuario u = opt.get();
+
+            if (!passwordEncoder.matches(actual, u.getContrasenia())) {
+                return false;
+            }
+
+            u.setContrasenia(passwordEncoder.encode(nueva));
+            usuarioRepository.save(u);
+            return true;
+        }
+        return false;
+    }
+
+
 
 
 }

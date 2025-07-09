@@ -114,5 +114,16 @@ public class JwtUtil {
         return claims.get("restauranteId", Integer.class).longValue();
     }
 
+    /**
+     * Obtiene el id del usuario.
+     * @param token jwt.
+     * @return el id del usuario.
+     */
+    public Long extraerUsuarioId(String token) {
+        Claims claims = extraerClaims(token);
+        return claims.get("id", Integer.class).longValue();
+    }
+
+
 
 }
