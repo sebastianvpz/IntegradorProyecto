@@ -7,9 +7,5 @@ package com.utp.integradorspringboot.repositories;
 import com.utp.integradorspringboot.models.Pedido;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-/**
- *
- * @author jcerv
- */
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 }

@@ -15,7 +15,6 @@ public class PedidoConDetallesDTO {
     private String estadoEntrega;
     private String estadoPago;
 
-    // Lista de detalles
     private List<DetallePedidoDTO> platos;
 
     public Long getIdRestaurante() {

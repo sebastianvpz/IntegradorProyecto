@@ -7,9 +7,5 @@ package com.utp.integradorspringboot.repositories;
 import com.utp.integradorspringboot.models.Mesa;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-/**
- *
- * @author jcerv
- */
 public interface MesaRepository extends JpaRepository<Mesa, Long> {
 }

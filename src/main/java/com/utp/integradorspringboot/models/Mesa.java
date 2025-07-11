@@ -7,10 +7,6 @@ package com.utp.integradorspringboot.models;
 import jakarta.persistence.*;
 import java.io.Serializable;
 
-/**
- *
- * @author jcerv
- */
 @Entity
 @Table(name = "mesa")
 public class Mesa implements Serializable{

@@ -2,12 +2,11 @@ package com.utp.integradorspringboot.api.dto;
 
 public class DetallePedidoDTO {
     private Long idProducto;
-    private String nombreProducto; // 👉 FALTABA ESTO
+    private String nombreProducto;
     private Integer cantidad;
     private Double precioUnitario;
     private Double subtotal;
 
-    // Getters y setters
     public Long getIdProducto() {
         return idProducto;
     }

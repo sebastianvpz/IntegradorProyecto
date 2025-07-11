@@ -8,11 +8,11 @@ public class VistaController {
 
     @GetMapping("/nuevospedidos")
     public String verNuevoPedido() {
-        return "nuevospedidos"; // Thymeleaf buscará templates/nuevospedidos.html
+        return "nuevospedidos";
     }
 
     @GetMapping("/pedidos")
     public String verPedidos() {
-        return "pedidos"; // Si tienes pedidos.html, también lo puede servir
+        return "pedidos";
     }
 }

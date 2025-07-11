@@ -48,8 +48,6 @@
                     </tr>
                 </tbody>
             </table>
-
-            <!-- Modal -->
             <div class="modal fade" id="modalPedido" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-scrollable">
                     <div class="modal-content">
@@ -94,10 +92,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Modal Ver Detalle -->
-            <!-- Modal Ver Detalle decorado y corregido -->
-            <!-- Modal Ver Detalle decorado y funcional -->
-            <!-- Modal Detalle Actualizado -->
             <div class="modal fade" id="modalDetalle" tabindex="-1" aria-labelledby="modalDetalleLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-scrollable">
                     <div class="modal-content">
@@ -236,7 +230,6 @@ new Vue({
                 alert('Seleccione un método de pago.');
                 return;
             }
-
             const payload = {
                 idPedido: this.pagoData.idPedido,
                 monto: this.pagoData.monto,
@@ -244,7 +237,6 @@ new Vue({
                 observacion: this.pagoData.observacion,
                 idUsuario: 1
             };
-
             this.$http.post('/api/pagos', payload)
                     .then(() => {
                         return this.actualizarEstadoPago(this.pagoData.idPedido);
@@ -260,11 +252,10 @@ new Vue({
                     });
         },
         actualizarEstadoPago(idPedido) {
-            // Primero, obtener todos los datos del pedido
             return this.$http.get(`/api/pedidos/${idPedido}`)
                     .then(res => {
                         const pedido = res.data;
-                        pedido.estadoPago = 'Pagado'; // Actualizamos solo este campo
+                        pedido.estadoPago = 'Pagado';
                         return this.$http.put(`/api/pedidos/${idPedido}`, pedido);
                     });
         },

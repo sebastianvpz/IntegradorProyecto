@@ -63,7 +63,7 @@ public class PedidoController {
             DetallesPedido dp = new DetallesPedido();
             dp.setIdPedido(p.getId());
             dp.setIdProducto(d.getIdProducto());
-            dp.setNombreProducto(d.getNombreProducto()); // 👈 NECESARIO
+            dp.setNombreProducto(d.getNombreProducto());
             dp.setCantidad(d.getCantidad());
             dp.setPrecioUnitario(d.getPrecioUnitario());
             dp.setSubtotal(d.getSubtotal());

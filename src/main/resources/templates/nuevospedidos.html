@@ -57,7 +57,6 @@
                         <input type="text" placeholder="Buscar plato" class="form-control w-50 me-2" v-model="busqueda">
                         <button class="btn btn-light"><i class="bi bi-search"></i></button>
                     </div>
-                    <!-- lista de productos -->
                     <div class="row scroll-productos">
                         <div class="col-md-6 mb-3" v-for="p in platosFiltrados" :key="p.id">
                             <div class="producto-card">
@@ -75,10 +74,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- panel derecho -->
                 <div class="col-md-4">
                     <div class="pedido-panel">
-                        <!-- datos del cliente y mesa -->
                         <div class="mb-3">
                             <label for="nombreCliente" class="form-label">Nombre del comensal:</label>
                             <input type="text" id="nombreCliente" class="form-control mb-2"
@@ -92,7 +89,6 @@
                             <input type="number" id="personas" class="form-control"
                                    v-model.number="personas" min="1">
                         </div>
-                        <!-- resumen de pedido -->
                         <table class="table table-sm table-bordered">
                             <thead class="table-info">
                                 <tr>
@@ -113,7 +109,6 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <!-- descuento -->
                         <div class="mb-2">
                             <select class="form-select d-inline w-50" v-model="tipoDescuento">
                                 <option>Porcentaje</option>
@@ -123,13 +118,11 @@
                                    placeholder="Descuento" v-model.number="valorDescuento">
                             <button class="btn btn-secondary ms-2" @click="aplicarDescuento">Aplicar</button>
                         </div>
-                        <!-- totales -->
                         <div class="mb-2">
                             <p>Sub Total: S/ {{ subtotal.toFixed(2) }}</p>
                             <p>Descuento: S/ {{ descuento.toFixed(2) }}</p>
                             <p><strong>Total: S/ {{ total.toFixed(2) }}</strong></p>
                         </div>
-                        <!-- acciones -->
                         <div class="text-center">
                             <button class="btn btn-danger me-2" @click="cancelarPedido">Cancelar</button>
                             <button class="btn btn-success" @click="ordenarPedido">Ordenar</button>
@@ -202,12 +195,11 @@
                             estadoPago: "No pagado",
                             platos: this.pedido.map(p => ({
                                     idProducto: p.id,
-                                    nombreProducto: p.nombre, // ✅ Agregar esto
+                                    nombreProducto: p.nombre,
                                     cantidad: p.cantidad,
                                     precioUnitario: p.precio,
                                     subtotal: p.precio * p.cantidad
                                 }))
-
                         };
                         this.$http.post("/api/pedidos", payload)
                                 .then(() => window.location.href = "/pedidos")
