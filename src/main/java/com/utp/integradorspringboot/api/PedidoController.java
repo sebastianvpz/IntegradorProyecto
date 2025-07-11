@@ -1,83 +1,120 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.utp.integradorspringboot.api;
 
+import com.utp.integradorspringboot.api.dto.PedidoConDetallesDTO;
+import com.utp.integradorspringboot.api.dto.DetallePedidoDTO;
 import com.utp.integradorspringboot.models.Pedido;
+import com.utp.integradorspringboot.models.DetallesPedido;
 import com.utp.integradorspringboot.repositories.PedidoRepository;
+import com.utp.integradorspringboot.repositories.DetallesPedidoRepository;
+
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
-/**
- *
- * @author jcerv
- */
 @CrossOrigin(origins = "http://localhost:8081")
 @RestController
 @RequestMapping("/api")
 public class PedidoController {
 
     @Autowired
-    PedidoRepository repository;
+    private PedidoRepository pedidoRepo;
+
+    @Autowired
+    private DetallesPedidoRepository detallesRepo;
 
     @GetMapping("/pedidos")
     public ResponseEntity<List<Pedido>> getAll() {
-        List<Pedido> lista = repository.findAll();
+        List<Pedido> lista = pedidoRepo.findAll();
         return new ResponseEntity<>(lista, HttpStatus.OK);
     }
 
     @GetMapping("/pedidos/{id}")
-    public ResponseEntity<Pedido> getById(@PathVariable("id") Long id) {
-        Optional<Pedido> dto = repository.findById(id);
-        if (dto.isPresent()) {
-            return new ResponseEntity<>(dto.get(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<Pedido> getById(@PathVariable Long id) {
+        Optional<Pedido> opt = pedidoRepo.findById(id);
+        return opt.map(p -> new ResponseEntity<>(p, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @PostMapping("/pedidos")
-    public ResponseEntity<Pedido> create(@RequestBody Pedido dto) {
-        Pedido nuevo = new Pedido();
-        nuevo.setIdRestaurante(dto.getIdRestaurante());
-        nuevo.setIdMesa(dto.getIdMesa());
-        nuevo.setIdUsuario(dto.getIdUsuario());
-        nuevo.setFechaCreacion(LocalDate.now().toString());
-        nuevo.setEstadoEntrega("en preparación");
-        nuevo.setEstadoPago("no pagado");
-        nuevo.setSubtotal(dto.getSubtotal());
-        nuevo.setDescuento(dto.getDescuento());
-        nuevo.setCostoFinal(dto.getCostoFinal());
-        Pedido saved = repository.save(nuevo);
-        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    public ResponseEntity<Void> createConDetalles(@RequestBody PedidoConDetallesDTO dto) {
+        Pedido p = new Pedido();
+        p.setIdRestaurante(dto.getIdRestaurante());
+        p.setIdUsuario(dto.getIdUsuario());
+        p.setIdMesa(dto.getNumeroMesa().longValue());
+        p.setNumeroMesa(dto.getNumeroMesa());
+        p.setComensal(dto.getComensal());
+        p.setnPersona(dto.getnPersona());
+        p.setFechaCreacion(LocalDate.now());
+        p.setHoraInicio(LocalTime.now());
+        p.setHoraEntrega(null);
+        p.setEstadoEntrega(dto.getEstadoEntrega());
+        p.setEstadoPago(dto.getEstadoPago());
+        p.setSubtotal(dto.getSubtotal());
+        p.setDescuento(dto.getDescuento());
+        p.setCostoFinal(dto.getCostoFinal());
+        pedidoRepo.save(p);
+
+        for (DetallePedidoDTO d : dto.getPlatos()) {
+            DetallesPedido dp = new DetallesPedido();
+            dp.setIdPedido(p.getId());
+            dp.setIdProducto(d.getIdProducto());
+            dp.setNombreProducto(d.getNombreProducto()); // 👈 NECESARIO
+            dp.setCantidad(d.getCantidad());
+            dp.setPrecioUnitario(d.getPrecioUnitario());
+            dp.setSubtotal(d.getSubtotal());
+            detallesRepo.save(dp);
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("/pedidos/{id}")
-    public ResponseEntity<Pedido> update(@PathVariable("id") Long id, @RequestBody Pedido dto) {
-        Pedido nuevo = repository.findById(id).orElse(null);
-        if (nuevo != null) {
-            nuevo.setIdMesa(dto.getIdMesa());
-            return new ResponseEntity<>(repository.save(nuevo), HttpStatus.OK);
-        } else {
+    public ResponseEntity<Pedido> update(@PathVariable Long id, @RequestBody Pedido dto) {
+        Optional<Pedido> opt = pedidoRepo.findById(id);
+        if (!opt.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+        Pedido p = opt.get();
+        p.setNumeroMesa(dto.getNumeroMesa());
+        p.setComensal(dto.getComensal());
+        p.setnPersona(dto.getnPersona());
+
+        if (dto.getHoraEntrega() != null) {
+            p.setHoraEntrega(dto.getHoraEntrega());
+        }
+        if (dto.getEstadoEntrega() != null) {
+            p.setEstadoEntrega(dto.getEstadoEntrega());
+        }
+        if (dto.getEstadoPago() != null) {
+            p.setEstadoPago(dto.getEstadoPago());
+        }
+
+        p.setSubtotal(dto.getSubtotal());
+        p.setDescuento(dto.getDescuento());
+        p.setCostoFinal(dto.getCostoFinal());
+
+        Pedido updated = pedidoRepo.save(p);
+        return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
     @DeleteMapping("/pedidos/{id}")
-    public ResponseEntity<HttpStatus> delete(@PathVariable("id") Long id) {
-        try {
-            repository.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        if (!pedidoRepo.existsById(id)) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+        pedidoRepo.deleteById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @GetMapping("/detalles_pedido/{idPedido}")
+    public ResponseEntity<List<DetallesPedido>> getDetalles(@PathVariable Long idPedido) {
+        List<DetallesPedido> lista = detallesRepo.findByIdPedido(idPedido);
+        return ResponseEntity.ok(lista);
+    }
 }

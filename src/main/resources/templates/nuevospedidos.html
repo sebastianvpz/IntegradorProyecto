@@ -5,19 +5,30 @@
         <style>
             .producto-card {
                 border: 1px solid #ccc;
-                border-radius: 10px;
-                padding: 10px;
-                margin: 10px 0;
-                text-align: center;
-                width: 100%;
-                height: 220px;
-            }
-            .producto-card img {
-                width: 100%;
-                height: 100px;
-                background: #f0f0f0;
                 border-radius: 8px;
-                object-fit: cover;
+                padding: 10px 12px;
+                margin-bottom: 10px;
+                background: #fff;
+                font-size: 14px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                height: 150px;
+            }
+            .producto-card p {
+                margin: 0;
+                line-height: 1.4;
+            }
+            .producto-card .producto-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .producto-card .producto-info {
+                flex-grow: 1;
+            }
+            .producto-card .producto-agregar {
+                margin-top: 8px;
             }
             .pedido-panel {
                 border: 1px solid #ccc;
@@ -37,46 +48,56 @@
     </head>
     <body>
         <div layout:fragment="content" class="container-fluid" id="app">
+            <!-- panel izquierdo -->
             <div class="row">
-                <!-- PANEL IZQUIERDO (PRODUCTOS) -->
                 <div class="col-md-8">
+                    <!-- buscador -->
                     <div class="mb-3 d-flex align-items-center">
                         <a href="/pedidos" class="btn btn-danger me-3">← Volver</a>
                         <input type="text" placeholder="Buscar plato" class="form-control w-50 me-2" v-model="busqueda">
                         <button class="btn btn-light"><i class="bi bi-search"></i></button>
                     </div>
-
-                    ```
+                    <!-- lista de productos -->
                     <div class="row scroll-productos">
                         <div class="col-md-6 mb-3" v-for="p in platosFiltrados" :key="p.id">
-                            <div class="producto-card text-start">
-                                <p><strong>Plato:</strong> {{ p.nombre }}</p>
-                                <p><strong>Precio:</strong> S/ {{ p.precio.toFixed(2) }}</p>
-                                <p><strong>Estado:</strong> {{ p.estado }}</p>
-                                <p><strong>Descripción:</strong> {{ p.descripcion || 'Sin descripción' }}</p>
-                                <button class="btn btn-dark btn-sm w-100 mt-2" @click="agregarPlato(p)">Agregar +</button>
+                            <div class="producto-card">
+                                <div class="producto-header">
+                                    <strong>{{ p.nombre }}</strong>
+                                    <span class="text-success">S/ {{ p.precio.toFixed(2) }}</span>
+                                </div>
+                                <div class="producto-info mt-1">
+                                    <small>{{ p.descripcion || 'Sin descripción' }}</small>
+                                </div>
+                                <div class="producto-agregar">
+                                    <button class="btn btn-sm btn-dark w-100" @click="agregarPlato(p)">Agregar +</button>
+                                </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
-                <!-- PANEL DERECHO (RESUMEN DEL PEDIDO) -->
+                <!-- panel derecho -->
                 <div class="col-md-4">
                     <div class="pedido-panel">
+                        <!-- datos del cliente y mesa -->
                         <div class="mb-3">
-                            <label for="nombreCliente" class="form-label">Nombre del Cliente:</label>
-                            <input type="text" id="nombreCliente" class="form-control mb-2" v-model="nombreCliente" placeholder="Ingrese nombre del cliente">
+                            <label for="nombreCliente" class="form-label">Nombre del comensal:</label>
+                            <input type="text" id="nombreCliente" class="form-control mb-2"
+                                   v-model="nombreCliente" placeholder="Ingrese nombre del comensal">
 
-                            <label for="numeroMesa" class="form-label">Número de Mesa:</label>
-                            <input type="number" id="numeroMesa" class="form-control" v-model.number="numeroMesa" min="1" placeholder="Ej. 5">
+                            <label for="numeroMesa" class="form-label">Número de mesa:</label>
+                            <input type="number" id="numeroMesa" class="form-control mb-2"
+                                   v-model.number="numeroMesa" min="1" placeholder="Ej. 5">
+
+                            <label for="personas" class="form-label">Número de personas:</label>
+                            <input type="number" id="personas" class="form-control"
+                                   v-model.number="personas" min="1">
                         </div>
-
-
+                        <!-- resumen de pedido -->
                         <table class="table table-sm table-bordered">
                             <thead class="table-info">
                                 <tr>
                                     <th>Plato</th>
-                                    <th>Cant.</th>
+                                    <th>Cantidad</th>
                                     <th>Precio</th>
                                     <th></th>
                                 </tr>
@@ -92,36 +113,30 @@
                                 </tr>
                             </tbody>
                         </table>
-
+                        <!-- descuento -->
                         <div class="mb-2">
                             <select class="form-select d-inline w-50" v-model="tipoDescuento">
                                 <option>Porcentaje</option>
                                 <option>Fijo</option>
                             </select>
-                            <input type="number" class="form-control d-inline w-25 ms-2" placeholder="Descuento" v-model.number="valorDescuento">
+                            <input type="number" class="form-control d-inline w-25 ms-2"
+                                   placeholder="Descuento" v-model.number="valorDescuento">
                             <button class="btn btn-secondary ms-2" @click="aplicarDescuento">Aplicar</button>
                         </div>
-
-                        <div class="mb-2">
-                            <label>Personas:</label>
-                            <input type="number" min="1" class="form-control d-inline w-25 ms-2" v-model.number="personas">
-                        </div>
-
+                        <!-- totales -->
                         <div class="mb-2">
                             <p>Sub Total: S/ {{ subtotal.toFixed(2) }}</p>
                             <p>Descuento: S/ {{ descuento.toFixed(2) }}</p>
                             <p><strong>Total: S/ {{ total.toFixed(2) }}</strong></p>
                         </div>
-
+                        <!-- acciones -->
                         <div class="text-center">
-                            <button class="btn btn-danger" @click="cancelarPedido">Cancelar</button>
+                            <button class="btn btn-danger me-2" @click="cancelarPedido">Cancelar</button>
                             <button class="btn btn-success" @click="ordenarPedido">Ordenar</button>
                         </div>
                     </div>
                 </div>
             </div>
-            ```
-
         </div>
 
         <script layout:fragment="script">
@@ -131,21 +146,23 @@
                     busqueda: "",
                     platos: [],
                     pedido: [],
+                    nombreCliente: "",
+                    numeroMesa: 1,
                     personas: 1,
                     tipoDescuento: "Porcentaje",
                     valorDescuento: 0,
-                    descuento: 0,
-                    nombreCliente: "",
-                    numeroMesa: 1
-
+                    descuento: 0
                 },
                 computed: {
                     platosFiltrados() {
-                        const buscar = this.busqueda.toLowerCase();
-                        return this.platos.filter(p => p.nombre.toLowerCase().includes(buscar));
+                        const b = this.busqueda.toLowerCase();
+                        return this.platos.filter(p =>
+                            p.nombre.toLowerCase().includes(b) ||
+                                    (p.descripcion && p.descripcion.toLowerCase().includes(b))
+                        );
                     },
                     subtotal() {
-                        return this.pedido.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+                        return this.pedido.reduce((s, i) => s + i.precio * i.cantidad, 0);
                     },
                     total() {
                         return this.subtotal - this.descuento;
@@ -153,56 +170,57 @@
                 },
                 methods: {
                     agregarPlato(plato) {
-                        let existe = this.pedido.find(p => p.id === plato.id);
-                        if (existe) {
-                            existe.cantidad++;
-                        } else {
+                        const e = this.pedido.find(x => x.id === plato.id);
+                        if (e)
+                            e.cantidad++;
+                        else
                             this.pedido.push({...plato, cantidad: 1});
-                        }
                     },
                     quitarPlato(plato) {
-                        this.pedido = this.pedido.filter(p => p.id !== plato.id);
+                        this.pedido = this.pedido.filter(x => x.id !== plato.id);
                     },
                     aplicarDescuento() {
-                        if (this.tipoDescuento === "Porcentaje") {
-                            this.descuento = this.subtotal * (this.valorDescuento / 100);
-                        } else {
-                            this.descuento = this.valorDescuento;
-                        }
+                        this.descuento = this.tipoDescuento === "Porcentaje"
+                                ? this.subtotal * (this.valorDescuento / 100)
+                                : this.valorDescuento;
                     },
                     cargarPlatos() {
-                        this.$http.get("/api/platos").then(response => {
-                            this.platos = response.data.filter(p => p.estado === 'activo');
-                        });
+                        this.$http.get("/api/platos")
+                                .then(r => this.platos = r.data.filter(p => p.estado === 'activo'));
                     },
                     ordenarPedido() {
-                        const nuevoPedido = {
-                            idUsuario: 1,
-                            idMesa: 1,
+                        const payload = {
                             idRestaurante: 1,
+                            idUsuario: 1,
+                            numeroMesa: this.numeroMesa,
+                            comensal: this.nombreCliente,
+                            nPersona: this.personas,
                             subtotal: this.subtotal,
                             descuento: this.descuento,
                             costoFinal: this.total,
-                            horaEntrega: new Date().getHours(),
-                            fechaCreacion: new Date().toISOString().split("T")[0],
-                            estadoEntrega: "en preparación",
-                            estadoPago: "no pagado"
-                        };
+                            estadoEntrega: "En preparación",
+                            estadoPago: "No pagado",
+                            platos: this.pedido.map(p => ({
+                                    idProducto: p.id,
+                                    nombreProducto: p.nombre, // ✅ Agregar esto
+                                    cantidad: p.cantidad,
+                                    precioUnitario: p.precio,
+                                    subtotal: p.precio * p.cantidad
+                                }))
 
-                        this.$http.post("/api/pedidos", nuevoPedido)
-                                .then(response => {
-                                    window.location.href = "/pedidos"; // redirige al ver éxito
-                                })
-                                .catch(err => {
-                                    alert("Error al registrar pedido");
-                                    console.error(err);
-                                });
+                        };
+                        this.$http.post("/api/pedidos", payload)
+                                .then(() => window.location.href = "/pedidos")
+                                .catch(console.error);
                     },
                     cancelarPedido() {
-                        if (confirm("¿Seguro que deseas cancelar el pedido actual?")) {
+                        if (confirm("¿Cancelar pedido?")) {
                             this.pedido = [];
-                            this.descuento = 0;
+                            this.nombreCliente = "";
+                            this.numeroMesa = 1;
+                            this.personas = 1;
                             this.valorDescuento = 0;
+                            this.descuento = 0;
                         }
                     }
                 },
@@ -211,6 +229,5 @@
                 }
             });
         </script>
-
     </body>
 </html>

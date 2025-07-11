@@ -1,27 +1,21 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.utp.integradorspringboot.models;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
-/**
- *
- * @author jcerv
- */
 @Entity
-@Table(name = "pedido")
-public class Pedido implements Serializable{
+@Table(name = "pedidos")
+public class Pedido implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
-    
+
     @Column(name = "id_restaurante", nullable = false)
     private Long idRestaurante;
 
@@ -30,36 +24,49 @@ public class Pedido implements Serializable{
 
     @Column(name = "id_usuario", nullable = false)
     private Long idUsuario;
-    
+
+    @Column(name = "hora_inicio")
+    private LocalTime horaInicio;
+
     @Column(name = "hora_entrega")
-    private Long horaEntrega;
-    
+    private LocalTime horaEntrega;
+
     @Column(name = "estado_entrega")
     private String estadoEntrega;
-    
+
     @Column(name = "fecha_creacion")
-    private String fechaCreacion;
+    private LocalDate fechaCreacion;
     
     @Column(name = "subtotal")
     private double subtotal;
-    
+
     @Column(name = "descuento")
     private double descuento;
-    
+
     @Column(name = "costo_final")
     private double costoFinal;
-    
+
     @Column(name = "estado_pago")
     private String estadoPago;
+
+    @Column(name = "comensal")
+    private String comensal;
+
+    @Column(name = "numero_mesa")
+    private Integer numeroMesa;
+
+    @Column(name = "n_persona")
+    private Integer nPersona;
 
     public Pedido() {
     }
 
-    public Pedido(Long id, Long idRestaurante, Long idMesa, Long idUsuario, Long horaEntrega, String estadoEntrega, String fechaCreacion, double subtotal, double descuento, double costoFinal, String estadoPago) {
+    public Pedido(Long id, Long idRestaurante, Long idMesa, Long idUsuario, LocalTime horaInicio, LocalTime horaEntrega, String estadoEntrega, LocalDate fechaCreacion, double subtotal, double descuento, double costoFinal, String estadoPago, String comensal, Integer numeroMesa, Integer nPersona) {
         this.id = id;
         this.idRestaurante = idRestaurante;
         this.idMesa = idMesa;
         this.idUsuario = idUsuario;
+        this.horaInicio = horaInicio;
         this.horaEntrega = horaEntrega;
         this.estadoEntrega = estadoEntrega;
         this.fechaCreacion = fechaCreacion;
@@ -67,6 +74,9 @@ public class Pedido implements Serializable{
         this.descuento = descuento;
         this.costoFinal = costoFinal;
         this.estadoPago = estadoPago;
+        this.comensal = comensal;
+        this.numeroMesa = numeroMesa;
+        this.nPersona = nPersona;
     }
 
     public Long getId() {
@@ -101,11 +111,19 @@ public class Pedido implements Serializable{
         this.idUsuario = idUsuario;
     }
 
-    public Long getHoraEntrega() {
+    public LocalTime getHoraInicio() {
+        return horaInicio;
+    }
+
+    public void setHoraInicio(LocalTime horaInicio) {
+        this.horaInicio = horaInicio;
+    }
+
+    public LocalTime getHoraEntrega() {
         return horaEntrega;
     }
 
-    public void setHoraEntrega(Long horaEntrega) {
+    public void setHoraEntrega(LocalTime horaEntrega) {
         this.horaEntrega = horaEntrega;
     }
 
@@ -117,11 +135,11 @@ public class Pedido implements Serializable{
         this.estadoEntrega = estadoEntrega;
     }
 
-    public String getFechaCreacion() {
+    public LocalDate getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public void setFechaCreacion(String fechaCreacion) {
+    public void setFechaCreacion(LocalDate fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 
@@ -157,6 +175,30 @@ public class Pedido implements Serializable{
         this.estadoPago = estadoPago;
     }
 
+    public String getComensal() {
+        return comensal;
+    }
+
+    public void setComensal(String comensal) {
+        this.comensal = comensal;
+    }
+
+    public Integer getNumeroMesa() {
+        return numeroMesa;
+    }
+
+    public void setNumeroMesa(Integer numeroMesa) {
+        this.numeroMesa = numeroMesa;
+    }
+
+    public Integer getnPersona() {
+        return nPersona;
+    }
+
+    public void setnPersona(Integer nPersona) {
+        this.nPersona = nPersona;
+    }
+
     
 
     @Override
@@ -172,9 +214,6 @@ public class Pedido implements Serializable{
             return false;
         }
         Pedido other = (Pedido) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
+        return (this.id != null || other.id == null) && (this.id == null || this.id.equals(other.id));
     }
 }
