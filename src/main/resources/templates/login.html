@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
-    <!-- Vue y Vue Resource -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
-    <!-- Bootstrap y estilos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body class="bg-light">
+
 <div id="loginApp" class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -28,11 +27,17 @@
                             <label for="contrasenia" class="form-label">Contraseña</label>
                             <input type="password" v-model="credenciales.contrasenia" class="form-control" id="contrasenia" required>
                         </div>
+
                         <div v-if="error" class="alert alert-danger">
                             {{ error }}
                         </div>
+
                         <button type="submit" class="btn btn-primary w-100">Ingresar</button>
                     </form>
+
+                    <div class="text-center mt-3">
+                        <a href="/recuperar">¿Has olvidado tu contraseña?</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -41,15 +46,12 @@
 
 <script>
     Vue.http.interceptors.push((request, next) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      console.log("Agregando Authorization:", token);
-      request.headers.set('Authorization', 'Bearer ' + token);
-    } else {
-      console.warn("No hay token en localStorage.");
-    }
-    next();
-  });
+      const token = localStorage.getItem('token');
+      if (token) {
+        request.headers.set('Authorization', 'Bearer ' + token);
+      }
+      next();
+    });
 
     new Vue({
       el: '#loginApp',
@@ -79,7 +81,7 @@
               } else if (payload.roles.includes("CHEF")) {
                 window.location.href = "/inventariochef";
               } else {
-                window.location.href = "/";
+                window.location.href = "/login";
               }
             } else {
               this.error = "No se pudo iniciar sesión. Verifica las credenciales.";
@@ -91,5 +93,6 @@
       }
     });
 </script>
+
 </body>
 </html>

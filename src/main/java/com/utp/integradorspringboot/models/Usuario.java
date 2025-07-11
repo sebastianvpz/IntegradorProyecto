@@ -50,4 +50,8 @@ public class Usuario {
             inverseJoinColumns = @JoinColumn(name = "id_rol")
     )
     private Set<Rol> roles = new HashSet<>();
+
+    @Column(name = "token_recuperacion")
+    private String tokenRecuperacion;
+
 }

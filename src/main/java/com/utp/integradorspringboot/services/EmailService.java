@@ -4,23 +4,23 @@
  */
 package com.utp.integradorspringboot.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import com.utp.integradorspringboot.models.Email;
-/**
- *
- * @author jcerv_pm92n0w
- */
+import org.springframework.stereotype.Service;
+
+@Service
 public class EmailService {
-    public static void SolicitarEnvio(Email email, JavaMailSender emailSender) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("jcervanteslivon@gmail.com");
-            message.setTo(email.getTo());
-            message.setSubject(email.getSubject());
-            message.setText(email.getMessage());
-            emailSender.send(message);
-        } catch (Exception e) {  
-        }
+
+    @Autowired
+    private JavaMailSender mailSender;
+
+    public void enviarCorreoRecuperacion(String destinatario, String enlace) {
+        SimpleMailMessage mensaje = new SimpleMailMessage();
+        mensaje.setTo(destinatario);
+        mensaje.setSubject("Recuperación de contraseña");
+        mensaje.setText("Has solicitado recuperar tu contraseña. Haz clic en el siguiente enlace para establecer una nueva contraseña:\n\n" + enlace);
+        mailSender.send(mensaje);
     }
 }

@@ -135,6 +135,33 @@ public class UsuarioService {
         return false;
     }
 
+    public void guardarTokenRecuperacion(Long usuarioId, String token) {
+        Usuario usuario = usuarioRepository.findById(usuarioId).orElseThrow();
+        usuario.setTokenRecuperacion(token);
+        usuarioRepository.save(usuario);
+    }
+
+    public Optional<Usuario> buscarPorTokenRecuperacion(String token) {
+        System.out.println("Token recibido: " + token);
+        usuarioRepository.findByTokenRecuperacion(token).ifPresentOrElse(
+                u -> System.out.println("Usuario encontrado: " + u.getNombre()),
+                () -> System.out.println("No se encontró usuario con ese token.")
+        );
+
+        return usuarioRepository.findByTokenRecuperacion(token);
+    }
+
+    public void actualizarContrasenia(Usuario usuario, String nueva) {
+        String hash = passwordEncoder.encode(nueva);
+        usuario.setContrasenia(hash);
+        usuario.setTokenRecuperacion(null);
+        usuarioRepository.save(usuario);
+    }
+
+    public Optional<Usuario> buscarPorCorreo(String correo){
+        return usuarioRepository.findByCorreo(correo);
+
+    }
 
 
 
