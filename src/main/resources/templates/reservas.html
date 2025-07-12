@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
+<head>
+  <title>Gestión de Reservas</title>
+</head>
+<body>
+  <div layout:fragment="content">
+    <div id="vue-reservas">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Reservas</h3>
+        <div class="input-group w-25">
+          <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+          <input type="date" class="form-control" v-model="filtroFecha" @change="cargarReservas">
+        </div>
+        <button class="btn btn-success" @click="abrirFormulario()">
+          <i class="fas fa-plus"></i> Nueva reserva
+        </button>
+      </div>
+
+      <table class="table table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Nombre</th>
+            <th>Teléfono</th>
+            <th>Personas</th>
+            <th>Estado</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="res in reservas" :key="res.id">
+            <td>{{ res.fechaReserva }}</td>
+            <td>{{ res.horaReserva }}</td>
+            <td>{{ res.nombresComensal }} {{ res.apellidosComensal }}</td>
+            <td>{{ res.telefonoComensal }}</td>
+            <td>{{ res.numeroPersonas }}</td>
+            <td>
+              <span 
+                :class="{
+                  'badge bg-secondary': res.estado==='pendiente',
+                  'badge bg-success': res.estado==='completado'
+                }">
+                {{ res.estado }}
+              </span>
+            </td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-warning me-1" @click="editar(res)">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-info me-1" 
+                      :disabled="res.estado==='completado'" 
+                      @click="completar(res)">
+                <i class="fas fa-check-circle"></i>
+              </button>
+              <button class="btn btn-sm btn-danger" @click="eliminar(res)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr v-if="reservas.length===0">
+            <td colspan="7" class="text-center py-4">No hay reservas.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Modal para crear/editar -->
+      <div class="modal fade" id="modalReserva" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form @submit.prevent="guardar">
+              <div class="modal-header">
+                <h5 class="modal-title">{{ reservaActiva.id ? 'Editar' : 'Nueva' }} Reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-2">
+                  <label>Fecha</label>
+                  <input type="date" class="form-control" v-model="reservaActiva.fechaReserva" required>
+                </div>
+                <div class="mb-2">
+                  <label>Hora</label>
+                  <input type="time" class="form-control" v-model="reservaActiva.horaReserva" required>
+                </div>
+                <div class="mb-2">
+                  <label>Nombres</label>
+                  <input type="text" class="form-control" v-model="reservaActiva.nombresComensal" required>
+                </div>
+                <div class="mb-2">
+                  <label>Apellidos</label>
+                  <input type="text" class="form-control" v-model="reservaActiva.apellidosComensal" required>
+                </div>
+                <div class="mb-2">
+                  <label>Correo</label>
+                  <input type="email" class="form-control" v-model="reservaActiva.correoComensal" required>
+                </div>
+                <div class="mb-2">
+                  <label>Teléfono</label>
+                  <input type="tel" class="form-control" v-model="reservaActiva.telefonoComensal" required>
+                </div>
+                <div class="mb-2">
+                  <label># Personas</label>
+                  <input type="number" class="form-control" v-model.number="reservaActiva.numeroPersonas" min="1" required>
+                </div>
+                <div class="mb-2">
+                  <label>Ocasión</label>
+                  <input type="text" class="form-control" v-model="reservaActiva.ocasion">
+                </div>
+                <div class="mb-2">
+                  <label>Estado</label>
+                  <select class="form-select" v-model="reservaActiva.estado">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="completado">Completado</option>
+                  </select>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" type="submit">Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+
+<script layout:fragment="script">
+  new Vue({
+    el: '#vue-reservas',
+    data: {
+      reservas: [],
+      reservaActiva: {},
+      filtroFecha: ''
+    },
+    mounted() {
+      this.cargarReservas();
+    },
+    methods: {
+      cargarReservas() {
+        let url = '/api/reservas';
+        if (this.filtroFecha) {
+          url += '?fecha=' + this.filtroFecha;
+        }
+        this.$http.get(url).then(resp => {
+          this.reservas = resp.data;
+        });
+      },
+      abrirFormulario() {
+        this.reservaActiva = {
+          id: null,
+          fechaReserva: '',
+          horaReserva: '',
+          nombresComensal: '',
+          apellidosComensal: '',
+          correoComensal: '',
+          telefonoComensal: '',
+          numeroPersonas: 1,
+          ocasion: '',
+          estado: 'pendiente'
+        };
+        this.$nextTick(() => new bootstrap.Modal(
+          document.getElementById('modalReserva')
+        ).show());
+      },
+      editar(r) {
+        this.reservaActiva = Object.assign({}, r);
+        this.$nextTick(() => new bootstrap.Modal(
+          document.getElementById('modalReserva')
+        ).show());
+      },
+      guardar() {
+        const r = this.reservaActiva;
+        const pet = r.id
+          ? this.$http.put(`/api/reservas/${r.id}`, r)
+          : this.$http.post('/api/reservas', r);
+        pet.then(() => {
+          bootstrap.Modal.getInstance(
+            document.getElementById('modalReserva')
+          ).hide();
+          this.cargarReservas();
+        });
+      },
+      eliminar(r) {
+        if(confirm('Eliminar reserva?')) {
+          this.$http.delete(`/api/reservas/${r.id}`)
+            .then(() => this.cargarReservas());
+        }
+      },
+      completar(r) {
+        this.$http.put(`/api/reservas/completar/${r.id}`)
+          .then(() => this.cargarReservas());
+      }
+    }
+  });
+</script>
+</html>

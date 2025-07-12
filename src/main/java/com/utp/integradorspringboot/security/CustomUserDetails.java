@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 /**
  * Implementación de UserDetails para manejar autenticación personalizada.
@@ -30,9 +31,10 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return usuario.getRoles().stream()
-                .map(rol -> (GrantedAuthority) () -> "ROLE_" + rol.getNombre().toUpperCase())
-                .collect(Collectors.toSet());
+            .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.getNombre().toUpperCase()))
+            .collect(Collectors.toSet());
     }
+
 
     @Override
     public String getPassword() {

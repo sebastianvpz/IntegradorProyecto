@@ -25,12 +25,21 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/comensal/reservar").permitAll()                        
-                        .requestMatchers("/api/auth/**","/login","/usuarios", "/favicon.ico", "/inventario", "/productos-solicitados","/pisos","/platos","/dashboard","/cambiar-contrasenia","/perfil","/comensal","/comensal/**", "/comensal/reservar","/comensal/reservar/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/comensal/**").permitAll()
-                        .requestMatchers("/api/usuarios/**","/api/solicitados/**","/api/zonas","/api/mesas","/api/platos/**","/api/dashboard").hasAnyRole("ADMIN")
-                        .requestMatchers("/api/productos/**").hasAnyRole("ADMIN", "CHEF")
-                        .anyRequest().authenticated()
+                    .requestMatchers(HttpMethod.POST, "/comensal/reservar").permitAll()
+                    .requestMatchers(
+                        "/api/auth/**", "/login", "/usuarios", "/favicon.ico", 
+                        "/inventario", "/productos-solicitados", "/pisos", 
+                        "/platos", "/dashboard", "/cambiar-contrasenia", 
+                        "/perfil", "/comensal", "/comensal/**", 
+                        "/comensal/reservar", "/comensal/reservar/**"
+                    ).permitAll()
+                    .requestMatchers(HttpMethod.GET, "/comensal/**").permitAll()
+
+                    .requestMatchers("/admin/reservas", "/admin/reservas/**").hasRole("ADMIN")
+
+                    .requestMatchers("/api/reservas/**").hasRole("ADMIN")
+                    .requestMatchers("/api/productos/**").hasAnyRole("ADMIN", "CHEF")
+                    .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
