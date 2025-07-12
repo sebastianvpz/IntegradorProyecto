@@ -1,52 +1,78 @@
 package com.utp.integradorspringboot.models;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "reservas")
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
+@Setter
 public class Reserva {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "telefono_comensal", nullable = false)
-    private Long telefonoComensal;
-
-    @Column(name = "fecha_reserva", nullable = false)
-    private String fechaReserva;  // formato "yyyy-MM-dd"
-
-    @Column(name = "hora_reserva", nullable = false)
-    private String horaReserva;   // formato "HH:mm"
-
-    @Column(name = "numero_personas", nullable = false)
-    private Integer numeroPersonas;
-
-    @Column(name = "id_mesa", nullable = false)
-    private Integer idMesa;
-
-    @Column(name = "id_restaurante", nullable = false)
-    private Integer idRestaurante;
-
-    @Column(name = "nombres_comensal", length = 255, nullable = false)
+    @Column(name = "nombres_comensal")
     private String nombresComensal;
 
-    @Column(name = "apellidos_comensal", length = 255, nullable = false)
+    @Column(name = "apellidos_comensal")
     private String apellidosComensal;
 
-    @Column(name = "correo_comensal", length = 255, nullable = false)
+    @Column(name = "correo_comensal")
     private String correoComensal;
 
-    @Column(name = "estado", length = 100)
-    private String estado = "reservado";
+    @Column(name = "telefono_comensal")
+    private Long telefonoComensal;
 
-    @Column(name = "ocasion", length = 255)
+    @Column(name = "ocasion")
     private String ocasion;
 
+    @Column(name = "fecha_reserva")
+    private LocalDate fechaReserva;
+
+    @Column(name = "hora_reserva")
+    private LocalTime horaReserva;
+
+    @Column(name = "numero_personas")
+    private Integer numeroPersonas;
+
+    @Column(name = "id_mesa")
+    private Integer idMesa;
+
+    @Column(name = "estado")
+    private String estado = "reservado";
+
+    @Column(name = "id_restaurante")
+    private Integer idRestaurante;
+
     @Column(name = "fecha_creacion")
-    private String fechaCreacion;
+    private LocalDate fechaCreacion;
+
+    public Reserva() {}
+
+    public Reserva(String nombresComensal, String apellidosComensal, String correoComensal, Long telefonoComensal,
+                   String ocasion, LocalDate fechaReserva, LocalTime horaReserva, Integer numeroPersonas,
+                   Integer idMesa, Integer idRestaurante) {
+        this.nombresComensal = nombresComensal;
+        this.apellidosComensal = apellidosComensal;
+        this.correoComensal = correoComensal;
+        this.telefonoComensal = telefonoComensal;
+        this.ocasion = ocasion;
+        this.fechaReserva = fechaReserva;
+        this.horaReserva = horaReserva;
+        this.numeroPersonas = numeroPersonas;
+        this.idMesa = idMesa;
+        this.idRestaurante = idRestaurante;
+        this.estado = "reservado";
+        this.fechaCreacion = LocalDate.now();
+    }
+
+    // ✅ Ya no hay UnsupportedOperationException
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
 }

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${restaurante.nombre} + ' - Restaurante'">Restaurante</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            400: '#9ca3af',
+                            500: '#6b7280',
+                            600: '#4b5563',
+                            700: '#374151',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /*CSS personalizado */
+        .hero-bg { background: linear-gradient(to right, #f9fafb, #f3f4f6); }
+        .card-shadow { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+        .mobile-menu { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
+        .mobile-menu.open { transform: translateX(0); }
+        .star-filled { color: #fbbf24; fill: #fbbf24; }
+        .smooth-scroll { scroll-behavior: smooth; }
+        .backdrop-blur { backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="smooth-scroll">
+
+<!-- ================= HEADER ================= -->
+<header class="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur">
+    <div class="container mx-auto flex h-16 items-center justify-between px-4">
+        <a href="#inicio" class="flex items-center space-x-2">
+            <img th:src="@{${restaurante.logoUrl}}" alt="Logo" class="h-8 w-8 rounded"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <svg class="h-8 w-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            <span class="text-2xl font-bold text-gray-700" th:text="${restaurante.nombre}">Nombre Restaurante</span>
+        </a>
+        <nav class="hidden md:flex items-center space-x-8">
+            <a href="#inicio" class="text-gray-700 hover:text-primary-700">Inicio</a>
+            <a href="#carta" class="text-gray-700 hover:text-primary-700">Carta</a>
+            <a href="#contacto" class="text-gray-700 hover:text-primary-700">Contacto</a>
+            <a href="#reserva" class="text-gray-700 hover:text-primary-700">Reserva</a>
+        </nav>
+        <button id="mobile-menu-btn" class="md:hidden p-2 rounded-md border border-gray-200">☰</button>
+    </div>
+</header>
+
+<!-- ================= MAIN ================= -->
+<main>
+    <!-- Hero Section -->
+    <section id="inicio" class="hero-bg py-20 text-center">
+        <div class="container mx-auto">
+            <h1 class="text-4xl font-bold mb-4" th:text="${restaurante.nombre}">Bienvenido</h1>
+            <p class="text-lg text-gray-600" th:text="${restaurante.descripcion}">Descripción del restaurante</p>
+        </div>
+    </section>
+
+  <!-- Carta -->
+    <section id="carta" class="py-12 bg-white">
+        <div class="container mx-auto">
+            <h2 class="text-3xl font-semibold mb-6 text-center">Nuestra Carta</h2>
+            <p class="text-center text-gray-500">Platos próximamente...</p>
+        </div>
+    </section>
+
+    <!-- Formulario de Reserva -->
+    <section id="reserva" class="py-12 bg-gray-50">
+        <div class="container max-w-2xl mx-auto">
+            <h2 class="text-3xl font-semibold mb-6 text-center">Reserva tu mesa</h2>
+
+            <!-- Paso 1 (visible por defecto) -->
+            <div id="step1" class="space-y-4">
+                <label class="block">Número de personas
+                    <input type="number" id="guests" class="w-full border px-4 py-2" required>
+                </label>
+                <label class="block">Fecha
+                    <input type="date" id="date" class="w-full border px-4 py-2" required>
+                </label>
+                <label class="block">Hora
+                    <input type="time" id="time" class="w-full border px-4 py-2" required>
+                </label>
+                <label class="block">Preferencia
+                    <input type="text" id="preference" class="w-full border px-4 py-2">
+                </label>
+                <button onclick="nextStep()" class="bg-blue-600 text-white px-6 py-2 rounded">
+                    Siguiente
+                </button>
+            </div>
+
+            <!-- Paso 2 -->
+            <form id="reservation-form-step2" th:action="@{/comensal/reservar}" method="post"
+                  class="space-y-4 mt-6 hidden" th:object="${reserva}">
+                <!-- Datos ocultos -->
+                <input type="hidden" name="numeroPersonas" id="hidden-cantidad">
+                <input type="hidden" name="fechaReserva" id="hidden-fecha">
+                <input type="hidden" name="horaReserva" id="hidden-hora">
+                <input type="hidden" name="preferencia" id="hidden-preferencia">
+                <input type="hidden" name="idRestaurante" th:value="${restaurante.id}">
+                <input type="hidden" name="idMesa" value="1"/>
+
+                <!-- Datos del comensal -->
+                <label class="block">Nombres
+                    <input type="text" name="nombresComensal" class="w-full border px-4 py-2" required>
+                </label>
+                <label class="block">Apellidos
+                    <input type="text" name="apellidosComensal" class="w-full border px-4 py-2" required>
+                </label>
+                <label class="block">Correo electrónico
+                    <input type="email" name="correoComensal" class="w-full border px-4 py-2" required>
+                </label>
+                <label class="block">Teléfono
+                    <input type="tel" name="telefonoComensal" class="w-full border px-4 py-2" required>
+                </label>
+                <label class="block">Ocasión
+                    <select name="ocasion" class="w-full border px-4 py-2">
+                        <option>Cumpleaños</option>
+                        <option>Aniversario</option>
+                        <option>Negocios</option>
+                        <option>Otra</option>
+                    </select>
+                </label>
+
+                <button type="submit" onclick="return confirmarReserva()" class="bg-green-600 text-white px-6 py-2 rounded">
+                    Confirmar Reserva
+                </button>
+
+                <!-- Mensaje de confirmación -->
+                <div th:if="${mensaje}" class="bg-green-100 text-green-800 p-4 rounded mt-4 text-center">
+                    <p th:text="${mensaje}"></p>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Contacto -->
+    <section id="contacto" class="py-12 text-center bg-white">
+        <h2 class="text-3xl font-semibold mb-4">Contáctanos</h2>
+        <p th:text="${restaurante.direccion}">Dirección</p>
+        <p th:text="${restaurante.telefono}">Teléfono</p>
+        <p th:text="${restaurante.correo}">Correo</p>
+    </section>
+</main>
+
+<!-- Footer -->
+<footer class="bg-gray-200 text-center py-4">
+    <p>&copy; 2025 <span th:text="${restaurante.nombre}">Restaurante</span>. Todos los derechos reservados.</p>
+</footer>
+
+
+<!-- Scripts van al final -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+
+<script>
+ // Menú móvil
+    document.getElementById('mobile-menu-btn').addEventListener('click', function () {
+        const menu = document.getElementById('mobile-menu');
+        menu?.classList.toggle('open');
+    });
+
+    // Paso 1 → Paso 2
+    function nextStep() {
+        const guests = document.getElementById('guests').value;
+        const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
+        const preference = document.getElementById('preference').value;
+
+        if (!guests || !date || !time) {
+            alert('Por favor completa todos los campos obligatorios.');
+            return;
+        }
+
+        // Rellenar campos ocultos
+        document.getElementById('hidden-cantidad').value = guests;
+        document.getElementById('hidden-fecha').value = date;
+        document.getElementById('hidden-hora').value = time;
+        document.getElementById('hidden-preferencia').value = preference;
+
+        // Mostrar formulario
+        document.getElementById('step1').classList.add('hidden');
+        document.getElementById('reservation-form-step2').classList.remove('hidden');
+    }
+
+    // Confirmación visual
+    function confirmarReserva() {
+        alert("¡Reserva enviada con éxito!");
+        return true;
+    }
+</script>
+
+</body>
+</html>
