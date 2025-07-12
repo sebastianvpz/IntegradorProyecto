@@ -4,10 +4,6 @@
  */
 package com.utp.integradorspringboot.models;
 
-/**
- *
- * @author jcerv_pm92n0w
- */
 public class Email {
 
     private String to;

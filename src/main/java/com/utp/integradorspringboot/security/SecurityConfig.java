@@ -24,9 +24,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**","/login","/usuarios", "/favicon.ico", "/inventario", "/productos-solicitados","/pisos","/platos","/dashboard","/cambiar-contrasenia","/perfil","/nueva-password","/recuperar").permitAll()
+                        .requestMatchers("/api/auth/**","/login","/usuarios", "/favicon.ico", "/inventario", "/productos-solicitados","/pisos","/platos","/dashboard","/cambiar-contrasenia","/perfil","/nueva-password","/recuperar","/nuevospedidos","/pedidos","/mesas").permitAll()
                         .requestMatchers("/api/usuarios/**","/api/solicitados/**","/api/zonas","/api/mesas","/api/platos/**","/api/dashboard").hasAnyRole("ADMIN")
                         .requestMatchers("/api/productos/**").hasAnyRole("ADMIN", "CHEF")
+                        .requestMatchers("/api/pagos/**").hasAnyRole("MOZO")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

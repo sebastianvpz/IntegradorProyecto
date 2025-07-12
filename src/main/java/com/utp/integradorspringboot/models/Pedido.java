@@ -41,14 +41,14 @@ public class Pedido {
     @Column(name = "fecha_creacion")
     private LocalDate fechaCreacion;
 
-    @Column(name = "subtotal", nullable = false)
-    private BigDecimal subtotal;
+    @Column(name = "subtotal")
+    private double subtotal;
 
     @Column(name = "descuento")
-    private BigDecimal descuento;
+    private double descuento;
 
-    @Column(name = "costo_final", nullable = false)
-    private BigDecimal costoFinal;
+    @Column(name = "costo_final")
+    private double costoFinal;
 
     @Column(name = "estado_pago")
     private String estadoPago;
