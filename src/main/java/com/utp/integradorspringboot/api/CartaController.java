@@ -27,13 +27,20 @@ public class CartaController {
     CartaRepository repository;
 
     @GetMapping("/platos")
-    public ResponseEntity<List<Carta>> getAll(@RequestParam(required = false) String title) {
+    public ResponseEntity<List<Carta>> getAll(@RequestParam(required = false) Long idRestaurante) {
         try {
-            List<Carta> lista = new ArrayList<Carta>();
-            repository.findAll().forEach(lista::add);
+            List<Carta> lista;
+
+            if (idRestaurante != null) {
+                lista = repository.findByIdRestauranteAndEstado(idRestaurante, "activo");
+            } else {
+                lista = repository.findAll();
+            }
+
             if (lista.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
+
             return new ResponseEntity<>(lista, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);

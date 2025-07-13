@@ -117,12 +117,24 @@
         </section>
 
   <!-- Carta -->
-    <section id="carta" class="py-12 bg-white">
-        <div class="container mx-auto">
-            <h2 class="text-3xl font-semibold mb-6 text-center">Nuestra Carta</h2>
-            <p class="text-center text-gray-500">Platos próximamente...</p>
+<section id="carta" class="py-12 bg-white">
+    <div class="container mx-auto" id="carta-app" th:data-restaurante-id="${restaurante.id}">
+        <h2 class="text-3xl font-semibold mb-6 text-center">Nuestra Carta</h2>
+
+        <div v-if="platos.length === 0" class="text-center text-gray-500">
+            No hay platos disponibles por el momento.
         </div>
-    </section>
+
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-for="plato in platos" :key="plato.id" class="bg-white shadow rounded p-4">
+                <h3 class="text-xl font-bold mb-2">{{ plato.nombre }}</h3>
+                <p class="text-gray-600 mb-2">{{ plato.descripcion }}</p>
+                <p class="text-gray-800 font-semibold">S/ {{ plato.precio }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 
 <!-- Formulario de Reserva -->
 <section id="reserva" class="py-12 bg-gray-50">
@@ -193,13 +205,27 @@
             <label class="block">Ocasión
                 <input type="text" name="ocasion" class="w-full border px-4 py-2" placeholder="Ej. Cumpleaños, Negocios, etc.">
             </label>
-
+            <div class="flex items-center space-x-2">
+                <input type="checkbox" id="acepto" required class="h-4 w-4">
+                <label for="acepto" class="text-sm text-gray-700">
+                    Acepto los 
+                    <a href="#" class="text-blue-600 underline" onclick="abrirTerminos()">términos y condiciones</a>
+                </label>
+            </div>
             <button type="submit" onclick="return confirmarReserva()" class="bg-green-600 text-white px-6 py-2 rounded w-full">
                 Confirmar Reserva
             </button>
         </form>
     </div>
 
+    <div id="modal-terminos" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg p-4 w-full max-w-3xl relative">
+            <button onclick="cerrarTerminos()" class="absolute top-2 right-3 text-2xl text-gray-700">&times;</button>
+            <h2 class="text-xl font-semibold mb-4">Términos y Condiciones</h2>
+            <iframe th:src="@{${restaurante.terminosycondUrl}}" class="w-full h-96 border" frameborder="0"></iframe>
+        </div>
+    </div>
+    
     <!-- Modal de Confirmación -->
     <div id="modal-confirmacion" class="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center hidden">
         <div class="bg-white rounded-lg shadow-xl p-6 relative max-w-md w-full text-center">
@@ -283,6 +309,25 @@
 
 <!-- Scripts van al final -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.14"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.3"></script>
+<script>
+    new Vue({
+        el: '#carta-app',
+        data: {
+            platos: []
+        },
+        mounted() {
+            const el = document.getElementById('carta-app');
+            const idRestaurante = el.getAttribute('data-restaurante-id');
+            this.$http.get(`/api/platos?idRestaurante=${idRestaurante}`).then(resp => {
+                this.platos = resp.body;
+            });
+        }
+
+    });
+</script>
+
 </body>
 
 <script>
@@ -357,7 +402,6 @@
         modal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
 
-        return false; // evita recarga del formulario
     }
 
     // Cerrar modal, limpiar campos y volver a inicio
@@ -389,6 +433,16 @@
             inicio.scrollIntoView({ behavior: 'smooth' });
         }
     }
+    
+    function abrirTerminos() {
+        document.getElementById('modal-terminos').classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+    function cerrarTerminos() {
+        document.getElementById('modal-terminos').classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
 
 </script>
 
