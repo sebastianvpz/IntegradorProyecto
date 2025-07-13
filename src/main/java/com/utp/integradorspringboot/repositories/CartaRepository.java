@@ -7,5 +7,9 @@ package com.utp.integradorspringboot.repositories;
 import com.utp.integradorspringboot.models.Carta;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface CartaRepository extends JpaRepository<Carta, Long> {
+    List<Carta> findByIdRestauranteAndEstado(Long restauranteId, String estado);
+
 }

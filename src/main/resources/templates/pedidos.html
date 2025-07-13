@@ -1,210 +1,194 @@
 <html layout:decorate="_layout">
-    <head>
-        <title>Gestión de Pedidos</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    </head>
-    <body>
-        <div layout:fragment="content" class="container mt-4" id="app">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Gestión de pedidos</h2>
-                <a href="/nuevospedidos" class="btn btn-success">Agregar orden</a>
-            </div>
-            <table class="table table-striped">
-                <thead class="table-light">
-                    <tr>
-                        <th>Id orden</th>
-                        <th>N° mesa</th>
-                        <th>Comensal</th>
-                        <th>Mozo</th>
-                        <th>N° de personas</th>
-                        <th>Costo</th>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                        <th>Est. Entrega</th>
-                        <th>Est. Pago</th>
-                        <th class="text-center">Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="item in pedidos" :key="item.id">
-                        <td>{{ item.id }}</td>
-                        <td>{{ item.numeroMesa }}</td>
-                        <td>{{ item.comensal }}</td>
-                        <td>{{ item.idUsuario }}</td>
-                        <td>{{ item.nPersona }}</td>
-                        <td>S/ {{ item.costoFinal.toFixed(2) }}</td>
-                        <td>{{ item.fechaCreacion }}</td>
-                        <td>{{ item.horaInicio?.substring(0,5) }}</td>
-                        <td>{{ item.estadoEntrega }}</td>
-                        <td>{{ item.estadoPago }}</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-warning" @click="abrirModal(item)">
-                                Editar
-                            </button>
-                            <button class="btn btn-sm btn-primary me-1" @click="abrirDetalle(item)">
-                                Ver detalle
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="modal fade" id="modalPedido" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalLabel">Pedido</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                        </div>
-                        <div class="modal-body" v-if="pedidoSeleccionado">
-                            <div class="mb-3">
-                                <label class="form-label">N° mesa:</label>
-                                <input type="number" class="form-control" v-model.number="pedidoSeleccionado.numeroMesa">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Comensal:</label>
-                                <input type="text" class="form-control" v-model="pedidoSeleccionado.comensal">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">N° de personas:</label>
-                                <input type="number" class="form-control" v-model.number="pedidoSeleccionado.nPersona">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Estado de entrega:</label>
-                                <select class="form-select" v-model="pedidoSeleccionado.estadoEntrega">
-                                    <option>En preparación</option>
-                                    <option>Entregado</option>
-                                    <option>Cancelado</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Estado de pago:</label>
-                                <select class="form-select" v-model="pedidoSeleccionado.estadoPago">
-                                    <option>No pagado</option>
-                                    <option>Pagado</option>
-                                    <option>Cancelado</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" class="btn btn-primary" @click="guardarCambios">Guardar cambios</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal fade" id="modalDetalle" tabindex="-1" aria-labelledby="modalDetalleLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" v-if="pedidoDetalle">Detalle de la orden {{ pedidoDetalle.id }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                        </div>
-                        <div v-if="pedidoDetalle">
-                            <div class="modal-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <p><strong>Número de mesa:</strong> {{ pedidoDetalle.numeroMesa }}</p>
-                                        <p><strong>Nombre Cliente:</strong> {{ pedidoDetalle.comensal }}</p>
-                                        <p><strong>Personas:</strong> {{ pedidoDetalle.nPersona }}</p>
-                                        <p><strong>Horario de registro:</strong> {{ pedidoDetalle.horaInicio?.substring(0,5) }}</p>
-                                        <p><strong>Fecha de registro:</strong> {{ pedidoDetalle.fechaCreacion }}</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p><strong>Platos:</strong></p>
-                                        <ul>
-                                            <li v-for="d in pedidoDetalle.platos" :key="d.idProducto">
-                                                {{ d.nombreProducto }} × {{ d.cantidad }} (S/ {{ d.precioUnitario }})
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Estado Entrega:</label>
-                                        <select class="form-select" disabled>
-                                            <option selected>{{ pedidoDetalle.estadoEntrega }}</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Estado Pago:</label>
-                                        <select class="form-select" disabled>
-                                            <option selected>{{ pedidoDetalle.estadoPago }}</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer justify-content-between">
-                                <button type="button" class="btn btn-success" @click="abrirModalPago(pedidoDetalle)">Agregar pago</button>
-                                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<head>
+    <title>Gestión de Pedidos</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div layout:fragment="content" class="container mt-4" id="app">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de pedidos</h2>
+        <a href="/nuevospedidos" class="btn btn-success">Agregar orden</a>
+    </div>
 
-            <!-- Modal Pago -->
-            <div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Registrar Pago</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                        </div>
-                        <div class="modal-body" v-if="pagoData">
-                            <p><strong>Total a pagar:</strong> S/ {{ pagoData.monto.toFixed(2) }}</p>
-                            <div class="mb-3">
-                                <label class="form-label">Método de pago:</label>
-                                <select class="form-select" v-model="pagoData.medioPago">
-                                    <option disabled value="">Seleccione</option>
-                                    <option>Yape</option>
-                                    <option>Plin</option>
-                                    <option>Tarjeta de crédito</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Observaciones:</label>
-                                <textarea class="form-control" v-model="pagoData.observacion"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-primary" @click="guardarPago">Registrar</button>
-                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        </div>
+    <table class="table table-striped">
+        <thead class="table-light">
+        <tr>
+            <th>Id orden</th>
+            <th>N° mesa</th>
+            <th>Comensal</th>
+            <th>Mozo</th>
+            <th>N° de personas</th>
+            <th>Costo</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Est. Entrega</th>
+            <th>Est. Pago</th>
+            <th class="text-center">Acción</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="item in pedidos" :key="item.id">
+            <td>{{ item.id }}</td>
+            <td>{{ item.numeroMesa }}</td>
+            <td>{{ item.comensal }}</td>
+            <td>{{ item.usuarioId }}</td>
+            <td>{{ item.npersona }}</td>
+            <td>S/ {{ item.costoFinal.toFixed(2) }}</td>
+            <td>{{ item.fechaCreacion }}</td>
+            <td>{{ item.horaInicio?.substring(0,5) }}</td>
+            <td>{{ item.estadoEntrega }}</td>
+            <td>{{ item.estadoPago }}</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-warning" @click="abrirModal(item)">Editar</button>
+                <button class="btn btn-sm btn-primary me-1" @click="abrirDetalle(item)">Ver detalle</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Modal edición -->
+    <div class="modal fade" id="modalPedido" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" v-if="pedidoSeleccionado">
+                    <div class="mb-3">
+                        <label>N° mesa:</label>
+                        <input type="number" class="form-control" v-model.number="pedidoSeleccionado.numeroMesa">
                     </div>
+                    <div class="mb-3">
+                        <label>Comensal:</label>
+                        <input type="text" class="form-control" v-model="pedidoSeleccionado.comensal">
+                    </div>
+                    <div class="mb-3">
+                        <label>N° de personas:</label>
+                        <input type="number" class="form-control" v-model.number="pedidoSeleccionado.npersona">
+                    </div>
+                    <div class="mb-3">
+                        <label>Estado entrega:</label>
+                        <select class="form-select" v-model="pedidoSeleccionado.estadoEntrega">
+                            <option>En preparación</option>
+                            <option>Entregado</option>
+                            <option>Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Estado pago:</label>
+                        <select class="form-select" v-model="pedidoSeleccionado.estadoPago">
+                            <option>No pagado</option>
+                            <option>Pagado</option>
+                            <option>Cancelado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" @click="guardarCambios">Guardar cambios</button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script layout:fragment="script">
-new Vue({
-    el: '#app',
-    data: {
-        pedidos: [],
-        pedidoSeleccionado: null,
-        pedidoDetalle: null,
-        modalInstance: null,
-        detalleInstance: null,
-        modalPagoInstance: null,
-        pagoData: null
-    },
-    methods: {
-        cargarPedidos() {
-            this.$http.get('/api/pedidos')
+    <!-- Modal detalle -->
+    <div class="modal fade" id="modalDetalle" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalle orden {{ pedidoDetalle?.id }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" v-if="pedidoDetalle">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>N° mesa:</strong> {{ pedidoDetalle.numeroMesa }}</p>
+                            <p><strong>Cliente:</strong> {{ pedidoDetalle.comensal }}</p>
+                            <p><strong>Personas:</strong> {{ pedidoDetalle.npersona }}</p>
+                            <p><strong>Hora:</strong> {{ pedidoDetalle.horaInicio?.substring(0,5) }}</p>
+                            <p><strong>Fecha:</strong> {{ pedidoDetalle.fechaCreacion }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Platos:</strong></p>
+                            <ul>
+                                <li v-for="d in pedidoDetalle.platos" :key="d.idProducto">
+                                    {{ d.nombreProducto }} × {{ d.cantidad }} (S/ {{ d.precioUnitario }})
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button class="btn btn-success" @click="abrirModalPago(pedidoDetalle)">Agregar pago</button>
+                    <button class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pago -->
+    <div class="modal fade" id="modalPago" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrar Pago</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" v-if="pagoData">
+                    <p><strong>Total:</strong> S/ {{ pagoData.monto.toFixed(2) }}</p>
+                    <div class="mb-3">
+                        <label>Método de pago:</label>
+                        <select class="form-select" v-model="pagoData.medioPago">
+                            <option disabled value="">Seleccione</option>
+                            <option>Yape</option>
+                            <option>Plin</option>
+                            <option>Efectivo</option>
+                            <option>Tarjeta de crédito</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Observaciones:</label>
+                        <textarea class="form-control" v-model="pagoData.observacion"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" @click="guardarPago">Registrar</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script layout:fragment="script">
+    new Vue({
+        el: '#app',
+        data: {
+            pedidos: [],
+            pedidoSeleccionado: null,
+            pedidoDetalle: null,
+            modalInstance: null,
+            detalleInstance: null,
+            modalPagoInstance: null,
+            pagoData: null
+        },
+        methods: {
+            cargarPedidos() {
+                this.$http.get('/api/pedidos')
                     .then(res => this.pedidos = res.data)
                     .catch(err => console.error('Error al cargar pedidos', err));
-        },
-        abrirModal(pedido) {
-            this.pedidoSeleccionado = JSON.parse(JSON.stringify(pedido));
-            if (!this.modalInstance) {
-                this.modalInstance = new bootstrap.Modal(document.getElementById('modalPedido'));
-            }
-            this.modalInstance.show();
-        },
-        abrirDetalle(item) {
-            this.pedidoDetalle = JSON.parse(JSON.stringify(item));
-            this.metodoPago = '';
-            this.$http.get(`/api/detalles_pedido/${item.id}`)
+            },
+            abrirModal(pedido) {
+                this.pedidoSeleccionado = JSON.parse(JSON.stringify(pedido));
+                if (!this.modalInstance) {
+                    this.modalInstance = new bootstrap.Modal(document.getElementById('modalPedido'));
+                }
+                this.modalInstance.show();
+            },
+            abrirDetalle(item) {
+                this.pedidoDetalle = JSON.parse(JSON.stringify(item));
+                this.$http.get(`/api/detalles_pedido/${item.id}`)
                     .then(res => {
                         this.$set(this.pedidoDetalle, 'platos', res.data);
                         if (!this.detalleInstance) {
@@ -212,35 +196,26 @@ new Vue({
                         }
                         this.detalleInstance.show();
                     });
-        },
-        abrirModalPago(pedido) {
-            this.pagoData = {
-                idPedido: pedido.id,
-                monto: pedido.costoFinal,
-                medioPago: '',
-                observacion: ''
-            };
-            if (!this.modalPagoInstance) {
-                this.modalPagoInstance = new bootstrap.Modal(document.getElementById('modalPago'));
-            }
-            this.modalPagoInstance.show();
-        },
-        guardarPago() {
-            if (!this.pagoData.medioPago) {
-                alert('Seleccione un método de pago.');
-                return;
-            }
-            const payload = {
-                idPedido: this.pagoData.idPedido,
-                monto: this.pagoData.monto,
-                medioPago: this.pagoData.medioPago,
-                observacion: this.pagoData.observacion,
-                idUsuario: 1
-            };
-            this.$http.post('/api/pagos', payload)
-                    .then(() => {
-                        return this.actualizarEstadoPago(this.pagoData.idPedido);
-                    })
+            },
+            abrirModalPago(pedido) {
+                this.pagoData = {
+                    pedidoId: pedido.id,
+                    monto: pedido.costoFinal,
+                    medioPago: '',
+                    observacion: ''
+                };
+                if (!this.modalPagoInstance) {
+                    this.modalPagoInstance = new bootstrap.Modal(document.getElementById('modalPago'));
+                }
+                this.modalPagoInstance.show();
+            },
+            guardarPago() {
+                if (!this.pagoData.medioPago) {
+                    alert('Seleccione un método de pago.');
+                    return;
+                }
+                this.$http.post('/api/pagos', this.pagoData)
+                    .then(() => this.actualizarEstadoPago(this.pagoData.pedidoId))
                     .then(() => {
                         this.modalPagoInstance.hide();
                         this.detalleInstance.hide();
@@ -250,28 +225,18 @@ new Vue({
                         alert("Error al guardar el pago");
                         console.error(err);
                     });
-        },
-        actualizarEstadoPago(idPedido) {
-            return this.$http.get(`/api/pedidos/${idPedido}`)
+            },
+            actualizarEstadoPago(idPedido) {
+                return this.$http.get(`/api/pedidos/${idPedido}`)
                     .then(res => {
                         const pedido = res.data;
                         pedido.estadoPago = 'Pagado';
                         return this.$http.put(`/api/pedidos/${idPedido}`, pedido);
                     });
-        },
-        guardarCambios() {
-            const id = this.pedidoSeleccionado.id;
-            const payload = {
-                numeroMesa: this.pedidoSeleccionado.numeroMesa,
-                comensal: this.pedidoSeleccionado.comensal,
-                nPersona: this.pedidoSeleccionado.nPersona,
-                estadoEntrega: this.pedidoSeleccionado.estadoEntrega,
-                estadoPago: this.pedidoSeleccionado.estadoPago,
-                subtotal: this.pedidoSeleccionado.subtotal,
-                descuento: this.pedidoSeleccionado.descuento,
-                costoFinal: this.pedidoSeleccionado.costoFinal
-            };
-            this.$http.put(`/api/pedidos/${id}`, payload)
+            },
+            guardarCambios() {
+                const id = this.pedidoSeleccionado.id;
+                this.$http.put(`/api/pedidos/${id}`, this.pedidoSeleccionado)
                     .then(() => {
                         this.modalInstance.hide();
                         this.cargarPedidos();
@@ -280,11 +245,12 @@ new Vue({
                         alert("Error al guardar cambios");
                         console.error(err);
                     });
+            }
+        },
+        mounted() {
+            this.cargarPedidos();
         }
-    },
-    mounted() {
-        this.cargarPedidos();
-    }
-});
-        </script>
-    </body>
+    });
+</script>
+</body>
+</html>

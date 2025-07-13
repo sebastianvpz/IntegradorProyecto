@@ -6,15 +6,18 @@ import com.utp.integradorspringboot.models.Pedido;
 import com.utp.integradorspringboot.models.DetallesPedido;
 import com.utp.integradorspringboot.repositories.PedidoRepository;
 import com.utp.integradorspringboot.repositories.DetallesPedidoRepository;
+import com.utp.integradorspringboot.security.JwtUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "http://localhost:8081")
 @RestController
@@ -27,24 +30,37 @@ public class PedidoController {
     @Autowired
     private DetallesPedidoRepository detallesRepo;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @GetMapping("/pedidos")
-    public ResponseEntity<List<Pedido>> getAll() {
-        List<Pedido> lista = pedidoRepo.findAll();
-        return new ResponseEntity<>(lista, HttpStatus.OK);
+    public ResponseEntity<List<Pedido>> getAll(HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+
+        List<Pedido> lista = pedidoRepo.findByRestauranteId(restauranteId);
+        return ResponseEntity.ok(lista);
     }
 
     @GetMapping("/pedidos/{id}")
-    public ResponseEntity<Pedido> getById(@PathVariable Long id) {
-        Optional<Pedido> opt = pedidoRepo.findById(id);
-        return opt.map(p -> new ResponseEntity<>(p, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public ResponseEntity<Pedido> getById(@PathVariable Long id, HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+
+        Optional<Pedido> opt = pedidoRepo.findByIdAndRestauranteId(id, restauranteId);
+        return opt.map(p -> ResponseEntity.ok(p))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @PostMapping("/pedidos")
-    public ResponseEntity<Void> createConDetalles(@RequestBody PedidoConDetallesDTO dto) {
+    public ResponseEntity<Void> createConDetalles(@RequestBody PedidoConDetallesDTO dto, HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+        Long usuarioId = jwtUtil.extraerUsuarioId(token);
+
         Pedido p = new Pedido();
-        p.setRestauranteId(dto.getIdRestaurante());
-        p.setUsuarioId(dto.getIdUsuario());
+        p.setRestauranteId(restauranteId);
+        p.setUsuarioId(usuarioId);
         p.setMesaId(dto.getNumeroMesa().longValue());
         p.setNumeroMesa(dto.getNumeroMesa());
         p.setComensal(dto.getComensal());
@@ -73,11 +89,15 @@ public class PedidoController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+
     @PutMapping("/pedidos/{id}")
-    public ResponseEntity<Pedido> update(@PathVariable Long id, @RequestBody Pedido dto) {
-        Optional<Pedido> opt = pedidoRepo.findById(id);
+    public ResponseEntity<Pedido> update(@PathVariable Long id, @RequestBody Pedido dto, HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+
+        Optional<Pedido> opt = pedidoRepo.findByIdAndRestauranteId(id, restauranteId);
         if (!opt.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         Pedido p = opt.get();
@@ -100,16 +120,21 @@ public class PedidoController {
         p.setCostoFinal(dto.getCostoFinal());
 
         Pedido updated = pedidoRepo.save(p);
-        return new ResponseEntity<>(updated, HttpStatus.OK);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/pedidos/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (!pedidoRepo.existsById(id)) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public ResponseEntity<Void> delete(@PathVariable Long id, HttpServletRequest request) {
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+
+        Optional<Pedido> opt = pedidoRepo.findByIdAndRestauranteId(id, restauranteId);
+        if (!opt.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+
         pedidoRepo.deleteById(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/detalles_pedido/{idPedido}")
