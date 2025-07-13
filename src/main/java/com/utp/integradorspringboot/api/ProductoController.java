@@ -45,6 +45,13 @@ public class ProductoController {
         return productoService.listarPorRestaurante(restauranteId);
     }
 
+    // ESTE ES SOLO PARA PRUEBAS (CHEF sin token)
+    @GetMapping("/sin-token")
+    public List<Producto> listarSinToken() {
+        return productoService.listarTodo();
+    }
+
+
     /**
      * Crea un nuevo producto.
      *

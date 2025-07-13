@@ -52,6 +52,10 @@ public class ProductoService {
     public List<Producto> listarPorRestaurante(Long restauranteId) {
         return productoRepository.findByEstadoAndIdRestaurante("activo", restauranteId);
     }
+    // Temporal (sin filtro, para pruebas)
+    public List<Producto> listarTodo() {
+        return productoRepository.findAll();
+    }
 
     public void consumirStock(Long productoId, Long restauranteId, int cantidadConsumir) {
         Producto producto = productoRepository.findByIdAndIdRestaurante(productoId, restauranteId)
