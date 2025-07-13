@@ -1,5 +1,6 @@
 package com.utp.integradorspringboot.api;
 
+import com.utp.integradorspringboot.models.LoteProducto;
 import com.utp.integradorspringboot.models.Producto;
 import com.utp.integradorspringboot.security.JwtUtil;
 import com.utp.integradorspringboot.services.ProductoService;
@@ -168,6 +169,21 @@ public class ProductoController {
         productoService.consumirStock(id, restauranteId, cantidad);
 
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/consumir/detalle")
+    public ResponseEntity<List<LoteProducto>> consumirConDetalle(
+            @PathVariable Long id,
+            @RequestBody Map<String, Integer> payload,
+            HttpServletRequest request) {
+
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+
+        int cantidad = payload.get("cantidad");
+        List<LoteProducto> usados = productoService.consumirStockConDetalle(id, restauranteId, cantidad);
+
+        return ResponseEntity.ok(usados);
     }
 
 }

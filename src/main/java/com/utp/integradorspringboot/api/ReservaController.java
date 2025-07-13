@@ -28,7 +28,7 @@ public class ReservaController {
         String token = jwtUtil.obtenerTokenDesdeRequest(request);
         Integer restauranteId = jwtUtil.extraerRestauranteId(token).intValue();
 
-        List<Reserva> reservas = reservaService.listarPorRestaurante(restauranteId);
+        List<Reserva> reservas = reservaService.obtenerPorRestaurante(restauranteId);
         return ResponseEntity.ok(reservas);
     }
 

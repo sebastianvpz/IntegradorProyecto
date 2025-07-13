@@ -78,7 +78,7 @@
             </button>
         </div>
         <ul class="nav flex-column" id="menu">
-            <li class="nav-item" v-if="isAdmin || isChef">
+            <li class="nav-item" v-if="isAdmin">
                 <a class="nav-link" href="/dashboard"><i class="fas fa-chart-bar"></i> <span class="label-text">Dashboard</span></a>
             </li>
             <li class="nav-item" v-if="isMozo">
@@ -87,8 +87,11 @@
             <li class="nav-item" v-if="isMozo">
                 <a class="nav-link" href="/mesas"><i class="fas fa-tablet"></i> <span class="label-text">Mesas</span></a>
             </li>
+            <li class="nav-item" v-if="isChef">
+                <a class="nav-link" href="/inventariochef"><i class="fas fa-boxes"></i> <span class="label-text">Solicitar Productos</span></a>
+            </li>
             <li class="nav-item" v-if="isMozo">
-                <a class="nav-link" href="/reservas"><i class="fa fa-address-book"></i> <span class="label-text">Reservas</span></a>
+                <a class="nav-link" href="/reservas-mozo"><i class="fa fa-address-book"></i> <span class="label-text">Reservas</span></a>
             </li>
             <li class="nav-item" v-if="isAdmin">
                 <a class="nav-link" href="/inventario"><i class="fas fa-boxes"></i> <span class="label-text">Inventario</span></a>

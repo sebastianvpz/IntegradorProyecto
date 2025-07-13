@@ -5,6 +5,7 @@ import com.utp.integradorspringboot.models.ProductoSolicitado;
 import com.utp.integradorspringboot.security.JwtUtil;
 import com.utp.integradorspringboot.services.ProductoSolicitadoService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,10 +37,7 @@ public class ProductoSolicitadoController {
         return service.listarPendientes(restauranteId);
     }
 
-    @PostMapping
-    public ResponseEntity<ProductoSolicitado> crear(@RequestBody ProductoSolicitado solicitado) {
-        return ResponseEntity.ok(service.guardar(solicitado));
-    }
+
 
     @PutMapping("/{id}/estado")
     public ResponseEntity<ProductoSolicitado> cambiarEstado(
@@ -51,6 +49,26 @@ public class ProductoSolicitadoController {
         return actualizado != null
                 ? ResponseEntity.ok(actualizado)
                 : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping
+    public ResponseEntity<?> registrarSolicitudes(
+            @RequestBody List<SolicitudDTO> solicitudes,
+            HttpServletRequest request) {
+
+        String token = jwtUtil.obtenerTokenDesdeRequest(request);
+        Long restauranteId = jwtUtil.extraerRestauranteId(token);
+        Long usuarioId = jwtUtil.extraerUsuarioId(token);
+
+        service.guardarSolicitudes(solicitudes, restauranteId, usuarioId);
+
+        return ResponseEntity.ok("Solicitudes registradas");
+    }
+
+    @Data
+    public static class SolicitudDTO {
+        private Long productoId;
+        private Integer cantidad;
     }
 
 }

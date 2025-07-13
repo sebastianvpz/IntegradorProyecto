@@ -1,0 +1,146 @@
+<html layout:decorate="_layout">
+<head>
+    <title>Chef - Solicitar y Usar Productos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div layout:fragment="content" class="container mt-4" id="chefApp">
+    <h3>Tabla de productos</h3>
+
+    <div class="row">
+        <div class="col-md-9">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                <tr>
+                    <th>Id</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Cantidad</th>
+                    <th>Fecha Ing.</th>
+                    <th>Fecha Venc.</th>
+                    <th>Solicitar</th>
+                    <th>Usar</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="p in productos" :key="p.id">
+                    <td>{{ p.id }}</td>
+                    <td>{{ p.nombre }}</td>
+                    <td>{{ p.categoria }}</td>
+                    <td>{{ p.cantidad }}</td>
+                    <td>{{ p.fechaIngreso }}</td>
+                    <td>{{ p.fechaVencimiento }}</td>
+                    <td><button class="btn btn-sm btn-outline-primary" @click="abrirModalSolicitar(p)">+</button></td>
+                    <td><button class="btn btn-sm btn-outline-secondary" @click="abrirModalUsar(p)">🗑</button></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3">
+            <h5>Resumen de solicitudes</h5>
+            <table class="table table-sm">
+                <thead>
+                <tr><th>Nombre</th><th>Cant.</th></tr>
+                </thead>
+                <tbody>
+                <tr v-for="r in resumen" :key="r.productoId">
+                    <td>{{ r.nombre }}</td>
+                    <td>{{ r.cantidad }}</td>
+                </tr>
+                </tbody>
+            </table>
+            <button class="btn btn-success w-100" @click="confirmar">Confirmar</button>
+        </div>
+    </div>
+
+    <!-- Modal para solicitar o usar -->
+    <div class="modal fade" id="modalCantidad" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ modalAccion }} producto: {{ modalProducto?.nombre }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label>Cantidad:</label>
+                    <input type="number" class="form-control" v-model.number="modalCantidad" min="1">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" @click="confirmarModal">Aceptar</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script layout:fragment="script">
+    new Vue({
+      el: '#chefApp',
+      data: {
+        productos: [],
+        resumen: [],
+        modalProducto: null,
+        modalCantidad: 1,
+        modalAccion: '',
+        modalInstance: null
+      },
+      mounted() {
+        this.cargarProductos();
+        this.modalInstance = new bootstrap.Modal(document.getElementById('modalCantidad'));
+      },
+      methods: {
+        cargarProductos() {
+          this.$http.get('/api/productos').then(res => this.productos = res.body);
+        },
+        abrirModalSolicitar(p) {
+          this.modalProducto = p;
+          this.modalAccion = 'Solicitar';
+          this.modalCantidad = 1;
+          this.modalInstance.show();
+        },
+        abrirModalUsar(p) {
+          this.modalProducto = p;
+          this.modalAccion = 'Usar';
+          this.modalCantidad = 1;
+          this.modalInstance.show();
+        },
+        confirmarModal() {
+          if (this.modalAccion === 'Solicitar') {
+            const ya = this.resumen.find(r => r.productoId === this.modalProducto.id);
+            if (ya) {
+              ya.cantidad += this.modalCantidad;
+            } else {
+              this.resumen.push({
+                productoId: this.modalProducto.id,
+                nombre: this.modalProducto.nombre,
+                cantidad: this.modalCantidad
+              });
+            }
+          } else if (this.modalAccion === 'Usar') {
+            const payload = { cantidad: this.modalCantidad };
+            this.$http.post(`/api/productos/${this.modalProducto.id}/consumir`, payload)
+              .then(() => {
+                this.cargarProductos();
+                alert("Consumo registrado");
+              });
+          }
+          this.modalInstance.hide();
+        },
+        confirmar() {
+          this.$http.post('/api/solicitados', this.resumen).then(() => {
+            alert("Solicitudes enviadas");
+            this.resumen = [];
+          });
+        }
+      }
+    });
+</script>
+</body>
+</html>

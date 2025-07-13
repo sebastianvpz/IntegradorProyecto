@@ -7,6 +7,7 @@ import com.utp.integradorspringboot.repositories.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -86,6 +87,49 @@ public class ProductoService {
             throw new IllegalStateException("Inconsistencia: no se encontró stock suficiente en lotes");
         }
     }
+
+
+    public List<LoteProducto> consumirStockConDetalle(Long productoId, Long restauranteId, int cantidadConsumir) {
+        Producto producto = productoRepository.findByIdAndIdRestaurante(productoId, restauranteId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado en este restaurante"));
+
+        if (producto.getCantidad() < cantidadConsumir) {
+            throw new IllegalArgumentException("Stock insuficiente");
+        }
+
+        producto.setCantidad(producto.getCantidad() - cantidadConsumir);
+        productoRepository.save(producto);
+
+        List<LoteProducto> lotes = loteProductoRepository
+                .findByProductoIdAndIdRestauranteAndEstadoOrderByFechaVencimientoAsc(
+                        productoId, restauranteId, "activo");
+
+        List<LoteProducto> afectados = new ArrayList<>();
+
+        for (LoteProducto lote : lotes) {
+            if (cantidadConsumir == 0) break;
+
+            int antes = lote.getCantidad();
+
+            if (lote.getCantidad() <= cantidadConsumir) {
+                cantidadConsumir -= lote.getCantidad();
+                lote.setCantidad(0);
+                lote.setEstado("inactivo");
+            } else {
+                lote.setCantidad(lote.getCantidad() - cantidadConsumir);
+                cantidadConsumir = 0;
+            }
+            afectados.add(loteProductoRepository.save(lote));
+            System.out.println("Lote consumido: " + lote.getId() + " de " + antes + " a " + lote.getCantidad());
+        }
+
+        if (cantidadConsumir > 0) {
+            throw new IllegalStateException("Inconsistencia: no se encontró stock suficiente en lotes");
+        }
+
+        return afectados;
+    }
+
 
 
 

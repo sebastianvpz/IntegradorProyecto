@@ -26,9 +26,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**","/login","/usuarios", "/favicon.ico", "/inventario",
                                 "/productos-solicitados","/pisos","/platos","/dashboard","/cambiar-contrasenia",
-                                "/perfil","/nueva-password","/recuperar","/nuevospedidos","/pedidos","/mesas","/reservas").permitAll()
-                        .requestMatchers("/api/usuarios/**","/api/solicitados/**","/api/dashboard/**").hasAnyRole("ADMIN")
-                        .requestMatchers("/api/productos/**").hasAnyRole("ADMIN", "CHEF")
+                                "/perfil","/nueva-password","/recuperar","/nuevospedidos","/pedidos","/mesas","/reservas","/comensal/{idRestaurante}",
+                                "/comensal/reservar","/api/platos/public/**","/inventariochef").permitAll()
+                        .requestMatchers("/api/usuarios/**","/api/dashboard/**").hasAnyRole("ADMIN")
+                        .requestMatchers("/api/productos/**","/api/solicitados/**").hasAnyRole("ADMIN", "CHEF")
                         .requestMatchers("/api/platos/**","/api/mesas/**","/api/zonas/**","/api/reservas/**").hasAnyRole("MOZO","ADMIN")
                         .requestMatchers("/api/pagos/**", "/api/pedidos/**" ,"/api/detalles_pedido/**").hasAnyRole("MOZO")
                         .anyRequest().authenticated()

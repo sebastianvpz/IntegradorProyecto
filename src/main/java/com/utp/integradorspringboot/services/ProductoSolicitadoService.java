@@ -1,8 +1,13 @@
 package com.utp.integradorspringboot.services;
 
+import com.utp.integradorspringboot.api.ProductoSolicitadoController;
 import com.utp.integradorspringboot.dto.ProductoSolicitadoDto;
+import com.utp.integradorspringboot.models.Producto;
 import com.utp.integradorspringboot.models.ProductoSolicitado;
+import com.utp.integradorspringboot.models.Usuario;
+import com.utp.integradorspringboot.repositories.ProductoRepository;
 import com.utp.integradorspringboot.repositories.ProductoSolicitadoRepository;
+import com.utp.integradorspringboot.repositories.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +21,13 @@ public class ProductoSolicitadoService {
 
     @Autowired
     private ProductoSolicitadoRepository repository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private ProductoRepository productoRepository;
+
 
     public List<ProductoSolicitadoDto> listarPorRestaurante(Long restauranteId) {
         List<ProductoSolicitado> lista = repository.findByRestauranteId(restauranteId);
@@ -56,5 +68,26 @@ public class ProductoSolicitadoService {
             return repository.save(solicitado);
         }
         return null;
+    }
+
+    public void guardarSolicitudes(List<ProductoSolicitadoController.SolicitudDTO> solicitudes, Long restauranteId, Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        for (var dto : solicitudes) {
+            Producto producto = productoRepository.findById(dto.getProductoId())
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+            ProductoSolicitado ps = ProductoSolicitado.builder()
+                    .producto(producto)
+                    .cantidad(dto.getCantidad())
+                    .fechaSolicitud(LocalDateTime.now())
+                    .solicitadoPor(usuario)
+                    .estado("pendiente")
+                    .restauranteId(restauranteId)
+                    .build();
+
+            repository.save(ps);
+        }
     }
 }

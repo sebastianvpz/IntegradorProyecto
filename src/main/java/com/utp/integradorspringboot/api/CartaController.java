@@ -49,6 +49,22 @@ public class CartaController {
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @GetMapping("/platos/public")
+    public ResponseEntity<List<Carta>> getPublic(@RequestParam Long idRestaurante) {
+        try {
+            List<Carta> lista = repository.findByIdRestauranteAndEstado(idRestaurante, "activo");
+
+            if (lista.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(lista, HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
     @PostMapping("/platos")
     public ResponseEntity<Carta> create(@RequestBody Carta entidad, HttpServletRequest request) {
         try {
