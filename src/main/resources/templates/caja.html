@@ -1,170 +1,190 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
+<html xmlns:th="http://www.thymeleaf.org" layout:decorate="_layout">
 
 <head>
     <title>Estado de Caja</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
 
 <body>
-    <div layout:fragment="content">
-        <div id="estadoCaja" class="container mt-5">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3>Estado de caja</h3>
-                <button class="btn btn-success" @click="imprimir" v-if="cajaAbierta">Imprimir</button>
+<div layout:fragment="content">
+    <div id="vue-caja">
+        <h3 class="mb-4">Estado de caja</h3>
+
+        <div class="border rounded p-4 shadow-sm">
+            <div class="mb-3">
+                <strong>Dinero en caja:</strong> S/ {{ efectivoInicio.toFixed(2) }}
             </div>
-
-            <div class="border rounded p-4 shadow-sm">
-                <div class="mb-3">
-                    <strong>Dinero en caja:</strong> S/ {{ efectivoInicio.toFixed(2) }}
-                </div>
-                <div class="mb-3">
-                    <strong>Fecha y hora de inicio:</strong> {{ fechaInicio }}
-                </div>
-
-                <ul class="nav nav-tabs mb-3">
-                    <li class="nav-item">
-                        <a class="nav-link active">Resumen</a>
-                    </li>
-                </ul>
-
-                <div class="row g-3">
-                    <!-- Columna izquierda -->
-                    <div class="col-md-6">
-                        <div class="mb-2">
-                            <label>Efectivo:</label>
-                            <input v-model.number="efectivo" type="number" class="form-control" />
-                        </div>
-                        <div class="mb-2">
-                            <label>T. Crédito:</label>
-                            <input v-model.number="credito" type="number" class="form-control" />
-                        </div>
-                        <div class="mb-2">
-                            <label>T. Débito:</label>
-                            <input v-model.number="debito" type="number" class="form-control" />
-                        </div>
-                        <div class="mb-2">
-                            <label>Gastos:</label>
-                            <input v-model.number="gastos" type="number" class="form-control" />
-                        </div>
+            <div class="mb-3">
+                <strong>Fecha y hora de inicio:</strong> {{ fechaInicio }}
+            </div>
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item">
+                    <a class="nav-link active">Resumen</a>
+                </li>
+            </ul>
+            <div class="row g-3">
+                <!-- Columna izquierda -->
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <label>Efectivo:</label>
+                        <input v-model.number="efectivo" type="number" class="form-control" />
                     </div>
-
-                    <!-- Columna derecha -->
-                    <div class="col-md-6">
-                        <div class="mb-2">
-                            <label>Total ingreso en caja:</label>
-                            <input :value="totalIngreso.toFixed(2)" type="number" class="form-control" readonly />
-                        </div>
-                        <div class="mb-2">
-                            <label>Total egreso en caja:</label>
-                            <input :value="totalEgreso.toFixed(2)" type="number" class="form-control" readonly />
-                        </div>
-                        <div class="mb-2">
-                            <label>Saldo:</label>
-                            <input :value="saldo.toFixed(2)" type="number" class="form-control" readonly />
-                        </div>
-                        <div class="mb-2">
-                            <label>Saldo efectivo:</label>
-                            <input :value="saldoEfectivo.toFixed(2)" type="number" class="form-control" readonly />
-                        </div>
+                    <div class="mb-2">
+                        <label>T. Crédito:</label>
+                        <input v-model.number="credito" type="number" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label>T. Débito:</label>
+                        <input v-model.number="debito" type="number" class="form-control" />
+                    </div>
+                    <div class="mb-2">
+                        <label>Gastos:</label>
+                        <input v-model.number="gastos" type="number" class="form-control" />
                     </div>
                 </div>
-
-                <div class="mt-4 d-flex justify-content-end gap-2">
-                    <button class="btn btn-warning" @click="recalcular">Recalcular</button>
-                    <button v-if="cajaAbierta" class="btn btn-success" @click="cerrarCaja">Cerrar caja</button>
-                    <button v-else class="btn btn-primary" @click="abrirModal">Abrir caja</button>
+                <!-- Columna derecha -->
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <label>Total ingreso en caja:</label>
+                        <input :value="totalIngreso.toFixed(2)" type="number" class="form-control" readonly />
+                    </div>
+                    <div class="mb-2">
+                        <label>Total egreso en caja:</label>
+                        <input :value="totalEgreso.toFixed(2)" type="number" class="form-control" readonly />
+                    </div>
+                    <div class="mb-2">
+                        <label>Saldo:</label>
+                        <input :value="saldo.toFixed(2)" type="number" class="form-control" readonly />
+                    </div>
+                    <div class="mb-2">
+                        <label>Saldo efectivo:</label>
+                        <input :value="saldoEfectivo.toFixed(2)" type="number" class="form-control" readonly />
+                    </div>
                 </div>
             </div>
+            <div class="mt-4 d-flex justify-content-end gap-2">
+                <button class="btn btn-warning" @click="recalcular">Recalcular</button>
+                <button v-if="cajaAbierta" class="btn btn-success" @click="cerrarCaja">Cerrar caja</button>
+                <button v-else class="btn btn-primary" @click="abrirModal">Abrir caja</button>
+            </div>
+        </div>
 
-            <!-- Modal apertura -->
-            <div class="modal fade" id="modalApertura" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <form @submit.prevent="confirmarApertura">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Abrir Caja</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <label>Monto inicial:</label>
-                                <input v-model.number="montoApertura" type="number" class="form-control" required />
-                            </div>
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-primary">Abrir caja</button>
-                                <button type="button" class="btn btn-secondary"
+        <!-- Modal apertura -->
+        <div class="modal fade" id="modalApertura" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form @submit.prevent="confirmarApertura">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Abrir Caja</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <label>Monto inicial:</label>
+                            <input v-model.number="montoApertura" type="number" class="form-control" required />
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Abrir caja</button>
+                            <button type="button" class="btn btn-secondary"
                                     data-bs-dismiss="modal">Cancelar</button>
-                            </div>
-                        </form>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Fin del Modal -->
+
+        <!-- Toast Bootstrap -->
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+            <div id="toastCaja" class="toast align-items-center text-bg-success border-0" role="alert"
+                 aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-check-circle me-2"></i>
+                        ¡Caja cerrada correctamente!
                     </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                            aria-label="Close"></button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script layout:fragment="script">
-        new Vue({
-            el: '#estadoCaja',
-            data: {
-                cajaAbierta: false,
-                fechaInicio: '',
-                efectivoInicio: 0,
-                efectivo: 0,
-                credito: 0,
-                debito: 0,
-                gastos: 0,
-                montoApertura: 0
-            },
-            computed: {
-                totalIngreso() {
-                    return this.efectivo + this.credito + this.debito;
-                },
-                totalEgreso() {
-                    return this.gastos;
-                },
-                saldo() {
-                    return this.totalIngreso - this.totalEgreso;
-                },
-                saldoEfectivo() {
-                    return this.efectivo - this.totalEgreso;
-                }
-            },
-            methods: {
-                abrirModal() {
-                    const modal = new bootstrap.Modal(document.getElementById('modalApertura'));
-                    modal.show();
-                },
-                confirmarApertura() {
-                    this.efectivoInicio = this.montoApertura;
-                    this.fechaInicio = new Date().toLocaleString();
-                    this.efectivo = this.montoApertura;
+<script layout:fragment="script">
+    new Vue({
+        el: '#vue-caja',
+        data: {
+            cajaAbierta: false,
+            fechaInicio: '',
+            efectivoInicio: 0,
+            efectivo: 0,
+            credito: 0,
+            debito: 0,
+            gastos: 0,
+            montoApertura: 0,
+            cajaId: null
+        },
+        computed: {
+            totalIngreso() { return this.efectivo + this.credito + this.debito; },
+            totalEgreso() { return this.gastos; },
+            saldo() { return this.totalIngreso - this.totalEgreso; },
+            saldoEfectivo() { return this.efectivo - this.totalEgreso; }
+        },
+        mounted() {
+            this.$http.get('/api/caja/abierta').then(resp => {
+                if (resp.data) {
                     this.cajaAbierta = true;
+                    this.cajaId = resp.data.id;
+                    this.efectivoInicio = Number(resp.data.totalEfectivo || 0);
+                    this.fechaInicio = resp.data.fechaInicio ? resp.data.fechaInicio.replace('T', ' ').substring(0, 19) : '';
+                    this.efectivo = Number(resp.data.totalEfectivo || 0);
+                }
+            });
+        },
+        methods: {
+            abrirModal() {
+                const modal = new bootstrap.Modal(document.getElementById('modalApertura'));
+                modal.show();
+            },
+            confirmarApertura() {
+                this.$http.post('/api/caja/abrir', {
+                    totalEfectivo: this.montoApertura,
+                    estado: 'abierta'
+                }).then(resp => {
+                    this.cajaAbierta = true;
+                    this.cajaId = resp.data.id;
+                    this.efectivoInicio = Number(resp.data.totalEfectivo || 0);
+                    this.fechaInicio = resp.data.fechaInicio ? resp.data.fechaInicio.replace('T', ' ').substring(0, 16) : '';
+                    this.efectivo = Number(resp.data.totalEfectivo || 0);
                     bootstrap.Modal.getInstance(document.getElementById('modalApertura')).hide();
-                },
-                cerrarCaja() {
-                    alert('Caja cerrada. Total ventas: S/ ' + this.totalIngreso.toFixed(2));
-                    // Aquí llamas al backend para guardar cierre
+                });
+            },
+            cerrarCaja() {
+                this.$http.put(`/api/caja/cerrar/${this.cajaId}`, {
+                    totalVentas: this.totalIngreso,
+                    totalEfectivo: this.efectivo,
+                    totalTarjetaCredito: this.credito,
+                    totalTarjetaDebito: this.debito,
+                    totalEgresos: this.gastos,
+                    saldoFinal: this.saldo
+                }).then(() => {
                     this.cajaAbierta = false;
                     this.resetCampos();
-                },
-                recalcular() {
-                    // Puede forzar un render, pero ya se calcula automáticamente
-                },
-                imprimir() {
-                    window.print();
-                },
-                resetCampos() {
-                    this.efectivo = this.credito = this.debito = this.gastos = 0;
-                    this.fechaInicio = '';
-                    this.efectivoInicio = 0;
-                }
+                    const toastEl = document.getElementById('toastCaja');
+                    const toast = new bootstrap.Toast(toastEl);
+                    toast.show();
+                });
+            },
+            recalcular() { },
+            resetCampos() {
+                this.efectivo = this.credito = this.debito = this.gastos = 0;
+                this.fechaInicio = '';
+                this.efectivoInicio = 0;
+                this.cajaId = null;
             }
-        });
-    </script>
-</body>
+        }
+    });
+</script>
 
+</body>
 </html>
