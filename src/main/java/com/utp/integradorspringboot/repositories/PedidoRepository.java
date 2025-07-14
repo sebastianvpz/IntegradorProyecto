@@ -50,16 +50,17 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
             @Param("year") int year);
 
     @Query("""
-        SELECT COUNT(p)
+        SELECT MONTH(p.fechaCreacion), COUNT(DISTINCT p.comensal)
         FROM Pedido p
         WHERE p.restauranteId = :restauranteId
           AND YEAR(p.fechaCreacion) = :year
         GROUP BY MONTH(p.fechaCreacion)
         ORDER BY MONTH(p.fechaCreacion)
     """)
-    List<Integer> countClientesPorMes(
+    List<Object[]> countClientesPorMes(
             @Param("restauranteId") Long restauranteId,
             @Param("year") int year);
+
 
     @Query("""
         SELECT u.nombre AS mozo, COUNT(p) AS total

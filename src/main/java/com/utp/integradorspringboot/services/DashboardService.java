@@ -20,7 +20,7 @@ public class DashboardService {
     private PedidoRepository pedidoRepository;
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    private CierreCajaRepository cierreCajaRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -44,6 +44,9 @@ public class DashboardService {
             double ingresosDelMes = pagoRepository.sumPagosByRestauranteAndFecha(restauranteId, inicioMes, finMes);
             int ordenesDelMes = pedidoRepository.countByRestauranteAndFecha(restauranteId, inicioMes, finMes);
 
+            Number egresosBD = cierreCajaRepository.sumEgresosByRestauranteAndFecha(restauranteId, inicioMes, finMes);
+            egresosDelMes = egresosBD != null ? egresosBD.doubleValue() : 0.0;
+
             Map<String, Integer> clientesPorMozo = new HashMap<>();
             for (Object[] row : pedidoRepository.countPedidosPorMozo(restauranteId)) {
                 clientesPorMozo.put((String) row[0], ((Number) row[1]).intValue());
@@ -52,49 +55,102 @@ public class DashboardService {
             List<Double> ingresosPorMes = Arrays.asList(new Double[12]);
             Collections.fill(ingresosPorMes, 0.0);
 
-            List<Object[]> queryResults = pagoRepository.sumPagosPorMesAnio(restauranteId, anioSeleccionado);
-            for (Object[] row : queryResults) {
+            for (Object[] row : pagoRepository.sumPagosPorMesAnio(restauranteId, anioSeleccionado)) {
                 Integer mesQuery = (Integer) row[0];
-                Double monto = (Double) row[1];
+                Double monto = ((Number) row[1]).doubleValue();
                 ingresosPorMes.set(mesQuery - 1, monto);
             }
 
             List<Double> egresosPorMes = Arrays.asList(new Double[12]);
             Collections.fill(egresosPorMes, 0.0);
+
+            for (Object[] row : cierreCajaRepository.sumEgresosPorMesAnio(restauranteId, anioSeleccionado)) {
+                Integer mesQuery = (Integer) row[0];
+                Double monto = ((Number) row[1]).doubleValue();
+                egresosPorMes.set(mesQuery - 1, monto);
+            }
+
+            // Corregido: clientes por mes 2024
+            List<Integer> clientesPorMes2024 = Arrays.asList(new Integer[12]);
+            Collections.fill(clientesPorMes2024, 0);
+
+            List<Object[]> clientesQuery2024 = pedidoRepository.countClientesPorMes(restauranteId, 2024);
+            for (Object[] row : clientesQuery2024) {
+                Integer mesQuery = (Integer) row[0];
+                Integer total = ((Number) row[1]).intValue();
+                clientesPorMes2024.set(mesQuery - 1, total);
+            }
+
+            // Corregido: clientes por mes 2025
+            List<Integer> clientesPorMes2025 = Arrays.asList(new Integer[12]);
+            Collections.fill(clientesPorMes2025, 0);
+
+            List<Object[]> clientesQuery2025 = pedidoRepository.countClientesPorMes(restauranteId, 2025);
+            for (Object[] row : clientesQuery2025) {
+                Integer mesQuery = (Integer) row[0];
+                Integer total = ((Number) row[1]).intValue();
+                clientesPorMes2025.set(mesQuery - 1, total);
+            }
 
             return DashboardDto.builder()
                     .clientesDelMes(clientesDelMes)
                     .ingresosDelMes(ingresosDelMes)
                     .ordenesDelMes(ordenesDelMes)
                     .egresosDelMes(egresosDelMes)
-                    .clientesPorMes2024(pedidoRepository.countClientesPorMes(restauranteId, 2024))
-                    .clientesPorMes2025(pedidoRepository.countClientesPorMes(restauranteId, 2025))
+                    .clientesPorMes2024(clientesPorMes2024)
+                    .clientesPorMes2025(clientesPorMes2025)
                     .clientesPorMozo(clientesPorMozo)
                     .ingresosPorMes(ingresosPorMes)
                     .egresosPorMes(egresosPorMes)
                     .build();
 
         } else {
+            // vista anual
             List<Double> ingresosPorMes = Arrays.asList(new Double[12]);
             Collections.fill(ingresosPorMes, 0.0);
 
-            List<Object[]> queryResults = pagoRepository.sumPagosPorMesAnio(restauranteId, anioSeleccionado);
-            for (Object[] row : queryResults) {
+            for (Object[] row : pagoRepository.sumPagosPorMesAnio(restauranteId, anioSeleccionado)) {
                 Integer mesQuery = (Integer) row[0];
-                Double monto = (Double) row[1];
+                Double monto = ((Number) row[1]).doubleValue();
                 ingresosPorMes.set(mesQuery - 1, monto);
             }
 
             List<Double> egresosPorMes = Arrays.asList(new Double[12]);
             Collections.fill(egresosPorMes, 0.0);
 
+            for (Object[] row : cierreCajaRepository.sumEgresosPorMesAnio(restauranteId, anioSeleccionado)) {
+                Integer mesQuery = (Integer) row[0];
+                Double monto = ((Number) row[1]).doubleValue();
+                egresosPorMes.set(mesQuery - 1, monto);
+            }
+
+            List<Integer> clientesPorMes2024 = Arrays.asList(new Integer[12]);
+            Collections.fill(clientesPorMes2024, 0);
+
+            List<Object[]> clientesQuery2024 = pedidoRepository.countClientesPorMes(restauranteId, 2024);
+            for (Object[] row : clientesQuery2024) {
+                Integer mesQuery = (Integer) row[0];
+                Integer total = ((Number) row[1]).intValue();
+                clientesPorMes2024.set(mesQuery - 1, total);
+            }
+
+            List<Integer> clientesPorMes2025 = Arrays.asList(new Integer[12]);
+            Collections.fill(clientesPorMes2025, 0);
+
+            List<Object[]> clientesQuery2025 = pedidoRepository.countClientesPorMes(restauranteId, 2025);
+            for (Object[] row : clientesQuery2025) {
+                Integer mesQuery = (Integer) row[0];
+                Integer total = ((Number) row[1]).intValue();
+                clientesPorMes2025.set(mesQuery - 1, total);
+            }
+
             return DashboardDto.builder()
                     .clientesDelMes(0)
                     .ingresosDelMes(0)
                     .ordenesDelMes(0)
                     .egresosDelMes(0)
-                    .clientesPorMes2024(pedidoRepository.countClientesPorMes(restauranteId, 2024))
-                    .clientesPorMes2025(pedidoRepository.countClientesPorMes(restauranteId, 2025))
+                    .clientesPorMes2024(clientesPorMes2024)
+                    .clientesPorMes2025(clientesPorMes2025)
                     .clientesPorMozo(new HashMap<>())
                     .ingresosPorMes(ingresosPorMes)
                     .egresosPorMes(egresosPorMes)

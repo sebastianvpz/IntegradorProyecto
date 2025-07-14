@@ -26,7 +26,7 @@
       </div>
       <div class="col bg-light p-3 m-2 rounded">
         <h5>Ingresos del mes</h5>
-        <h3>S/ {{ datos.ingresosDelMes.toFixed(2) }}</h3>
+        <h3>S/ {{ datos.ingresosDelMes?.toFixed(2) }}</h3>
       </div>
       <div class="col bg-light p-3 m-2 rounded">
         <h5>Órdenes del mes</h5>
@@ -34,7 +34,7 @@
       </div>
       <div class="col bg-light p-3 m-2 rounded">
         <h5>Egresos del mes</h5>
-        <h3>S/ {{ datos.egresosDelMes.toFixed(2) }}</h3>
+        <h3>S/ {{ datos.egresosDelMes?.toFixed(2) }}</h3>
       </div>
     </div>
 
@@ -67,8 +67,8 @@
         clientesPorMes2024: [],
         clientesPorMes2025: [],
         clientesPorMozo: {},
-        ingresosPorMes: [],
-        egresosPorMes: []
+        ingresosPorMes: Array(12).fill(0),
+        egresosPorMes: Array(12).fill(0)
       },
       meses: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
               'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
@@ -125,6 +125,14 @@
               { label: 'Ingresos', data: this.datos.ingresosPorMes, backgroundColor: 'green' },
               { label: 'Egresos', data: this.datos.egresosPorMes, backgroundColor: 'red' }
             ]
+          },
+          options: {
+            plugins: {
+              title: {
+                display: true,
+                text: 'Ingresos vs Egresos por Mes'
+              }
+            }
           }
         });
       }
