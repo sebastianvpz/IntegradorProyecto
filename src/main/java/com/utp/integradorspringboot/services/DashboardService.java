@@ -25,15 +25,6 @@ public class DashboardService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    /**
-     * Calcula las métricas del dashboard para un restaurante, en vista mensual o anual.
-     *
-     * @param request Petición HTTP para extraer JWT y restauranteId.
-     * @param vista   "mes" o "anio".
-     * @param mes     Mes (1-12), usado solo si vista="mes".
-     * @param anio    Año.
-     * @return DTO con las métricas.
-     */
     public DashboardDto obtenerDatosDashboard(HttpServletRequest request, String vista, Integer mes, Integer anio) {
         String token = jwtUtil.obtenerTokenDesdeRequest(request);
         Long restauranteId = jwtUtil.extraerRestauranteId(token);
@@ -41,7 +32,7 @@ public class DashboardService {
         LocalDate hoy = LocalDate.now();
         int anioSeleccionado = (anio != null) ? anio : hoy.getYear();
 
-        double egresosDelMes = 0.0; // Placeholder
+        double egresosDelMes = 0.0;
 
         if ("mes".equalsIgnoreCase(vista)) {
             int mesSeleccionado = (mes != null) ? mes : hoy.getMonthValue();
@@ -58,7 +49,16 @@ public class DashboardService {
                 clientesPorMozo.put((String) row[0], ((Number) row[1]).intValue());
             }
 
-            List<Double> ingresosPorMes = pagoRepository.sumPagosPorMesAnio(restauranteId, anioSeleccionado);
+            List<Double> ingresosPorMes = Arrays.asList(new Double[12]);
+            Collections.fill(ingresosPorMes, 0.0);
+
+            List<Object[]> queryResults = pagoRepository.sumPagosPorMesAnio(restauranteId, anioSeleccionado);
+            for (Object[] row : queryResults) {
+                Integer mesQuery = (Integer) row[0];
+                Double monto = (Double) row[1];
+                ingresosPorMes.set(mesQuery - 1, monto);
+            }
+
             List<Double> egresosPorMes = Arrays.asList(new Double[12]);
             Collections.fill(egresosPorMes, 0.0);
 
@@ -74,8 +74,17 @@ public class DashboardService {
                     .egresosPorMes(egresosPorMes)
                     .build();
 
-        } else { // vista = "anio"
-            List<Double> ingresosPorMes = pagoRepository.sumPagosPorMesAnio(restauranteId, anioSeleccionado);
+        } else {
+            List<Double> ingresosPorMes = Arrays.asList(new Double[12]);
+            Collections.fill(ingresosPorMes, 0.0);
+
+            List<Object[]> queryResults = pagoRepository.sumPagosPorMesAnio(restauranteId, anioSeleccionado);
+            for (Object[] row : queryResults) {
+                Integer mesQuery = (Integer) row[0];
+                Double monto = (Double) row[1];
+                ingresosPorMes.set(mesQuery - 1, monto);
+            }
+
             List<Double> egresosPorMes = Arrays.asList(new Double[12]);
             Collections.fill(egresosPorMes, 0.0);
 

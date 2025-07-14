@@ -59,7 +59,17 @@
   new Vue({
     el: '#vue-dashboard',
     data: {
-      datos: {},
+      datos: {
+        clientesDelMes: 0,
+        ingresosDelMes: 0,
+        ordenesDelMes: 0,
+        egresosDelMes: 0,
+        clientesPorMes2024: [],
+        clientesPorMes2025: [],
+        clientesPorMozo: {},
+        ingresosPorMes: [],
+        egresosPorMes: []
+      },
       meses: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
               'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
       anios: [2024, 2025],
@@ -75,11 +85,10 @@
         this.$http.get(`/api/dashboard?mes=${this.mesSeleccionado}&anio=${this.anioSeleccionado}`)
           .then(resp => {
             this.datos = resp.data;
-            this.renderCharts();
+            this.$nextTick(() => this.renderCharts());
           });
       },
       renderCharts() {
-        // Línea clientes
         if (this.charts.lineaClientes) this.charts.lineaClientes.destroy();
         const ctx1 = document.getElementById('lineaClientes').getContext('2d');
         this.charts.lineaClientes = new Chart(ctx1, {
@@ -93,7 +102,6 @@
           }
         });
 
-        // Pie mozos
         if (this.charts.pieMozos) this.charts.pieMozos.destroy();
         const ctx2 = document.getElementById('pieMozos').getContext('2d');
         this.charts.pieMozos = new Chart(ctx2, {
@@ -107,7 +115,6 @@
           }
         });
 
-        // Barras ingresos/egresos
         if (this.charts.barrasIngresosEgresos) this.charts.barrasIngresosEgresos.destroy();
         const ctx3 = document.getElementById('barrasIngresosEgresos').getContext('2d');
         this.charts.barrasIngresosEgresos = new Chart(ctx3, {

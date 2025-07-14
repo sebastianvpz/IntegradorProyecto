@@ -34,8 +34,18 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
             @Param("mes") int mes,
             @Param("year") int year);
 
+    /**
+     * Devuelve la suma de pagos agrupados por mes para un año dado,
+     * incluyendo el número del mes y el monto total por mes.
+     *
+     * @param restauranteId id del restaurante
+     * @param year año de consulta
+     * @return lista de Object[] donde:
+     *         [0] = Integer (número de mes: 1-12)
+     *         [1] = Double (monto total del mes)
+     */
     @Query("""
-        SELECT COALESCE(SUM(p.monto), 0)
+        SELECT MONTH(p.fechaPago), COALESCE(SUM(p.monto), 0)
         FROM Pago p
         JOIN Pedido ped ON p.pedidoId = ped.id
         WHERE ped.restauranteId = :restauranteId
@@ -43,7 +53,7 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
         GROUP BY MONTH(p.fechaPago)
         ORDER BY MONTH(p.fechaPago)
     """)
-    List<Double> sumPagosPorMesAnio(
+    List<Object[]> sumPagosPorMesAnio(
             @Param("restauranteId") Long restauranteId,
             @Param("year") int year);
 }
