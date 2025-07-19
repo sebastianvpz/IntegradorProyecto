@@ -10,7 +10,7 @@
     <div class="row">
         <div class="col-md-9">
             <table class="table table-bordered">
-                <thead class="table-light">
+                <thead class="table-dark">
                 <tr>
                     <th>Id</th>
                     <th>Nombre</th>
@@ -23,13 +23,13 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="p in productos" :key="p.id">
+                <tr v-for="p in productosOrdenados" :key="p.id">
                     <td>{{ p.id }}</td>
                     <td>{{ p.nombre }}</td>
                     <td>{{ p.categoria }}</td>
-                    <td>{{ p.cantidad }}</td>
+                    <td :class="{'text-danger fw-bold': p.cantidad <= p.cantidadMinima}">{{ p.cantidad }}</td>
                     <td>{{ p.fechaIngreso }}</td>
-                    <td>{{ p.fechaVencimiento }}</td>
+                    <td :class="{'text-danger fw-bold': estaPorVencer(p.fechaVencimiento) }">{{ p.fechaVencimiento || '-' }}</td>
                     <td><button class="btn btn-sm btn-outline-primary" @click="abrirModalSolicitar(p)">+</button></td>
                     <td><button class="btn btn-sm btn-outline-secondary" @click="abrirModalUsar(p)">🗑</button></td>
                 </tr>
@@ -95,9 +95,25 @@
         this.cargarProductos();
         this.modalInstance = new bootstrap.Modal(document.getElementById('modalCantidad'));
       },
+      computed: {
+        productosOrdenados() {
+          return [...this.productos].sort((a, b) => {
+            const fechaA = a.fechaVencimiento ? new Date(a.fechaVencimiento) : new Date(8640000000000000);
+            const fechaB = b.fechaVencimiento ? new Date(b.fechaVencimiento) : new Date(8640000000000000);
+            return fechaA - fechaB;
+          });
+        }
+      },
       methods: {
         cargarProductos() {
           this.$http.get('/api/productos').then(res => this.productos = res.body);
+        },
+        estaPorVencer(fecha) {
+          if (!fecha) return false;
+          const hoy = new Date();
+          const vencimiento = new Date(fecha);
+          const diffDias = (vencimiento - hoy) / (1000 * 60 * 60 * 24);
+          return diffDias <= 30;
         },
         abrirModalSolicitar(p) {
           this.modalProducto = p;

@@ -51,7 +51,21 @@ public class ProductoService {
      * @return Producto encontrado, en un Optional.
      */
     public List<Producto> listarPorRestaurante(Long restauranteId) {
-        return productoRepository.findByEstadoAndIdRestaurante("activo", restauranteId);
+        List<Producto> productos = productoRepository.findByEstadoAndIdRestaurante("activo", restauranteId);
+
+        for (Producto producto : productos) {
+            Optional<LoteProducto> loteProximo = loteProductoRepository
+                    .findTopByProductoIdAndIdRestauranteAndEstadoOrderByFechaVencimientoAsc(
+                            producto.getId(), restauranteId, "activo");
+
+            if (loteProximo.isPresent() && loteProximo.get().getFechaVencimiento() != null) {
+                producto.setFechaVencimiento(loteProximo.get().getFechaVencimiento().toString());
+            } else {
+                producto.setFechaVencimiento(null);
+            }
+        }
+
+        return productos;
     }
 
     public void consumirStock(Long productoId, Long restauranteId, int cantidadConsumir) {

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface LoteProductoRepository extends JpaRepository<LoteProducto, Long> {
@@ -15,6 +16,12 @@ public interface LoteProductoRepository extends JpaRepository<LoteProducto, Long
             String estado
     );
     List<LoteProducto> findByProductoIdAndIdRestaurante(Long productoId, Long restauranteId);
+
+    Optional<LoteProducto> findTopByProductoIdAndIdRestauranteAndEstadoOrderByFechaVencimientoAsc(
+            Long productoId, Long restauranteId, String estado);
+
+    List<LoteProducto> findByProductoIdAndIdRestauranteAndEstado(Long productoId, Long restauranteId, String estado);
+
 
 
 }

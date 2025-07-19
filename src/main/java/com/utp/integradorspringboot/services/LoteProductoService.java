@@ -50,13 +50,20 @@ public class LoteProductoService {
         if (loteOp.isPresent()) {
             LoteProducto lote = loteOp.get();
             lote.setEstado("inactivo");
-            return loteProductoRepository.save(lote);
+            loteProductoRepository.save(lote);
+
+            // Recalcular cantidad total del producto
+            actualizarCantidadProducto(lote.getProductoId(), lote.getIdRestaurante());
+
+            return lote;
         }
         return null;
     }
 
     public List<LoteProducto> listarPorProductoYRestaurante(Long productoId, Long restauranteId) {
-        return loteProductoRepository.findByProductoIdAndIdRestaurante(productoId, restauranteId);
+        return loteProductoRepository.findByProductoIdAndIdRestauranteAndEstado(
+                productoId, restauranteId, "activo"
+        );
     }
 
     public LoteProducto actualizar(Long id, LoteProducto lote, Long restauranteId) {
@@ -64,12 +71,39 @@ public class LoteProductoService {
         if (existente == null || !existente.getIdRestaurante().equals(restauranteId)) {
             return null;
         }
+
         existente.setCantidad(lote.getCantidad());
         existente.setFechaIngreso(lote.getFechaIngreso());
         existente.setFechaVencimiento(lote.getFechaVencimiento());
         existente.setProveedor(lote.getProveedor());
         loteProductoRepository.save(existente);
+
+        Long productoId = existente.getProductoId();
+        int cantidadTotal = loteProductoRepository
+                .findByProductoIdAndIdRestauranteAndEstadoOrderByFechaVencimientoAsc(
+                        productoId, restauranteId, "activo")
+                .stream()
+                .mapToInt(LoteProducto::getCantidad)
+                .sum();
+
+        Producto producto = productoRepository.findById(productoId).orElseThrow();
+        producto.setCantidad(cantidadTotal);
+        productoRepository.save(producto);
+
         return existente;
+    }
+
+    private void actualizarCantidadProducto(Long productoId, Long restauranteId) {
+        int cantidadTotal = loteProductoRepository
+                .findByProductoIdAndIdRestauranteAndEstadoOrderByFechaVencimientoAsc(
+                        productoId, restauranteId, "activo")
+                .stream()
+                .mapToInt(LoteProducto::getCantidad)
+                .sum();
+
+        Producto producto = productoRepository.findById(productoId).orElseThrow();
+        producto.setCantidad(cantidadTotal);
+        productoRepository.save(producto);
     }
 
 }
