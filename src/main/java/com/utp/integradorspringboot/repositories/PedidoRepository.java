@@ -71,4 +71,19 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     """)
     List<Object[]> countPedidosPorMozo(
             @Param("restauranteId") Long restauranteId);
+
+    @Query("""
+        SELECT u.nombre AS mozo, COUNT(p) AS total
+        FROM Pedido p
+        JOIN Usuario u ON u.id = p.usuarioId
+        WHERE p.restauranteId = :restauranteId
+          AND DATE(p.fechaCreacion) BETWEEN :inicio AND :fin
+        GROUP BY u.nombre
+    """)
+    List<Object[]> countPedidosPorMozoEnRango(
+            @Param("restauranteId") Long restauranteId,
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin);
+
+
 }

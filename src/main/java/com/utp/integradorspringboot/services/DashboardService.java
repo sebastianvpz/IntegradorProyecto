@@ -14,9 +14,6 @@ import java.util.*;
 public class DashboardService {
 
     @Autowired
-    private PagoRepository pagoRepository;
-
-    @Autowired
     private PedidoRepository pedidoRepository;
 
     @Autowired
@@ -33,6 +30,7 @@ public class DashboardService {
         int anioSeleccionado = (anio != null) ? anio : hoy.getYear();
 
         double egresosDelMes = 0.0;
+        double ingresosDelMes = 0.0;
 
         if ("mes".equalsIgnoreCase(vista)) {
             int mesSeleccionado = (mes != null) ? mes : hoy.getMonthValue();
@@ -41,21 +39,23 @@ public class DashboardService {
             LocalDate finMes = inicioMes.withDayOfMonth(inicioMes.lengthOfMonth());
 
             int clientesDelMes = pedidoRepository.countClientesDistinctByRestauranteAndFecha(restauranteId, inicioMes, finMes);
-            double ingresosDelMes = pagoRepository.sumPagosByRestauranteAndFecha(restauranteId, inicioMes, finMes);
             int ordenesDelMes = pedidoRepository.countByRestauranteAndFecha(restauranteId, inicioMes, finMes);
 
             Number egresosBD = cierreCajaRepository.sumEgresosByRestauranteAndFecha(restauranteId, inicioMes, finMes);
             egresosDelMes = egresosBD != null ? egresosBD.doubleValue() : 0.0;
 
+            Number ingresosBD = cierreCajaRepository.sumIngresosByRestauranteAndFecha(restauranteId, inicioMes, finMes);
+            ingresosDelMes = ingresosBD != null ? ingresosBD.doubleValue() : 0.0;
+
             Map<String, Integer> clientesPorMozo = new HashMap<>();
-            for (Object[] row : pedidoRepository.countPedidosPorMozo(restauranteId)) {
+            for (Object[] row : pedidoRepository.countPedidosPorMozoEnRango(restauranteId, inicioMes, finMes)) {
                 clientesPorMozo.put((String) row[0], ((Number) row[1]).intValue());
             }
 
             List<Double> ingresosPorMes = Arrays.asList(new Double[12]);
             Collections.fill(ingresosPorMes, 0.0);
 
-            for (Object[] row : pagoRepository.sumPagosPorMesAnio(restauranteId, anioSeleccionado)) {
+            for (Object[] row : cierreCajaRepository.sumIngresosPorMesAnio(restauranteId, anioSeleccionado)) {
                 Integer mesQuery = (Integer) row[0];
                 Double monto = ((Number) row[1]).doubleValue();
                 ingresosPorMes.set(mesQuery - 1, monto);
@@ -70,7 +70,6 @@ public class DashboardService {
                 egresosPorMes.set(mesQuery - 1, monto);
             }
 
-            // Corregido: clientes por mes 2024
             List<Integer> clientesPorMes2024 = Arrays.asList(new Integer[12]);
             Collections.fill(clientesPorMes2024, 0);
 
@@ -81,7 +80,6 @@ public class DashboardService {
                 clientesPorMes2024.set(mesQuery - 1, total);
             }
 
-            // Corregido: clientes por mes 2025
             List<Integer> clientesPorMes2025 = Arrays.asList(new Integer[12]);
             Collections.fill(clientesPorMes2025, 0);
 
@@ -109,7 +107,7 @@ public class DashboardService {
             List<Double> ingresosPorMes = Arrays.asList(new Double[12]);
             Collections.fill(ingresosPorMes, 0.0);
 
-            for (Object[] row : pagoRepository.sumPagosPorMesAnio(restauranteId, anioSeleccionado)) {
+            for (Object[] row : cierreCajaRepository.sumIngresosPorMesAnio(restauranteId, anioSeleccionado)) {
                 Integer mesQuery = (Integer) row[0];
                 Double monto = ((Number) row[1]).doubleValue();
                 ingresosPorMes.set(mesQuery - 1, monto);

@@ -37,5 +37,29 @@ public interface CierreCajaRepository extends JpaRepository<CierreCaja, Long> {
             @Param("restauranteId") Long restauranteId,
             @Param("year") int year);
 
+    @Query("""
+        SELECT COALESCE(SUM(c.totalVentas), 0)
+        FROM CierreCaja c
+        WHERE c.idRestaurante = :restauranteId
+          AND c.fechaInicio BETWEEN :inicio AND :fin
+    """)
+    BigDecimal sumIngresosByRestauranteAndFecha(
+            @Param("restauranteId") Long restauranteId,
+            @Param("inicio") LocalDate inicio,
+            @Param("fin") LocalDate fin);
+
+    @Query("""
+        SELECT MONTH(c.fechaInicio), COALESCE(SUM(c.totalVentas), 0)
+        FROM CierreCaja c
+        WHERE c.idRestaurante = :restauranteId
+          AND YEAR(c.fechaInicio) = :year
+        GROUP BY MONTH(c.fechaInicio)
+        ORDER BY MONTH(c.fechaInicio)
+    """)
+    List<Object[]> sumIngresosPorMesAnio(
+            @Param("restauranteId") Long restauranteId,
+            @Param("year") int year);
+
+
 
 }
