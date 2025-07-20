@@ -46,6 +46,52 @@
         </tbody>
     </table>
 
+    <!-- Modal para editar pedido -->
+    <div class="modal fade" id="modalPedido" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel">Editar Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" v-if="pedidoSeleccionado">
+                    <div class="mb-3">
+                        <label class="form-label">N° mesa:</label>
+                        <input type="number" class="form-control" v-model.number="pedidoSeleccionado.numeroMesa">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comensal:</label>
+                        <input type="text" class="form-control" v-model="pedidoSeleccionado.comensal">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">N° de personas:</label>
+                        <input type="number" class="form-control" v-model.number="pedidoSeleccionado.npersona">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Estado de entrega:</label>
+                        <select class="form-select" v-model="pedidoSeleccionado.estadoEntrega">
+                            <option>En preparación</option>
+                            <option>Entregado</option>
+                            <option>Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Estado de pago:</label>
+                        <select class="form-select" v-model="pedidoSeleccionado.estadoPago">
+                            <option>No pagado</option>
+                            <option>Pagado</option>
+                            <option>Cancelado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @click="guardarCambios">Guardar cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal detalle -->
     <div class="modal fade" id="modalDetalle" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
